@@ -27,14 +27,14 @@ public class CartaoService {
         return List.copyOf(cartoes);
     }
 
-    // TODO (#Factory Method): trocar esse new direto pela fabrica de cartoes
+    // TODO #1: trocar esse new direto pela fabrica de cartoes
     public Cartao criar(TipoCartao tipo, String titulo, String descricao) {
         Cartao cartao = new Cartao(proximoId.getAndIncrement(), tipo, titulo, descricao);
         cartoes.add(cartao);
         return cartao;
     }
 
-    // TODO (#Observer): avisar os observadores quando o cartao mudar de coluna
+    // TODO #3: avisar os observadores quando o cartao mudar de coluna
     public Cartao mover(long id, Coluna destino) {
         Cartao cartao = buscar(id);
         cartao.setColuna(destino);
