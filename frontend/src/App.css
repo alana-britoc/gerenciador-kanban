@@ -1,0 +1,26 @@
+main { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+h1 { margin: 0 0 16px; }
+
+.novo { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+.novo input { flex: 1; min-width: 180px; }
+.novo input, .novo select, button { padding: 8px 10px; border-radius: 6px; border: 1px solid #ccc; font: inherit; }
+button { cursor: pointer; background: #fff; }
+button:disabled { opacity: .4; cursor: default; }
+
+.quadro { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+@media (max-width: 720px) { .quadro { grid-template-columns: 1fr; } }
+
+.coluna { background: #f1f2f4; border-radius: 10px; padding: 12px; min-height: 200px; }
+.coluna h2 { font-size: 1rem; margin: 0 0 12px; }
+
+.cartao { background: #fff; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; border-left: 4px solid #888; }
+.cartao h3 { font-size: .95rem; margin: 4px 0; }
+.cartao p { font-size: .85rem; margin: 4px 0; color: #555; }
+.cartao-tarefa { border-left-color: #2f6fdb; }
+.cartao-bug { border-left-color: #d64545; }
+.cartao-melhoria { border-left-color: #2e9e5b; }
+.tipo { font-size: .7rem; font-weight: 600; color: #666; }
+.acoes { display: flex; justify-content: space-between; gap: 6px; margin-top: 8px; }
+.acoes button { padding: 2px 8px; font-size: .8rem; }
+
+.erro { color: #d64545; }
