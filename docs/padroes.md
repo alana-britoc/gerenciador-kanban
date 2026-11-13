@@ -25,14 +25,19 @@ classDiagram
 
 **Problema:** um cartão pode ter prazo, prioridade, etiqueta ou várias dessas coisas juntas. Criar uma subclasse para cada combinação (`CartaoComPrazoEPrioridade`...) explode o número de classes.
 
-**Solução:** uma interface comum para o cartão e decoradores que envolvem um cartão e acrescentam um extra. Os decoradores podem ser empilhados: `new ComPrazo(new ComPrioridade(cartao))`.
+**Solução:** uma interface comum para o cartão e decoradores que envolvem um cartão e acrescentam um extra. Os decoradores podem ser empilhados: `new ComPrazo(new ComPrioridade(cartao, ALTA), prazo)`.
+
+O `Cartao` e o `CartaoDecorator` implementam `ItemQuadro`. O decorador repassa todas as chamadas para o item que envolve, e cada decorador concreto sobrescreve só o `getExtras()`, somando o seu extra aos extras do item de dentro. O cartão sem decorador devolve `Extras.NENHUM`. Quando o mesmo extra aparece duas vezes, vale o decorador mais externo; etiquetas se acumulam sem repetir.
+
+O `CartaoService` guarda o cartão original e a versão decorada de cada cartão. O `POST /api/cartoes/{id}/extras` usa o `TipoExtra` para escolher o decorador e envolve a versão atual. Como o decorador consulta o cartão original, mover o cartão continua refletindo na versão decorada.
 
 ```mermaid
 classDiagram
     class ItemQuadro {
         <<interface>>
         +getTitulo() String
-        +getResumo() String
+        +getColuna() Coluna
+        +getExtras() Extras
     }
     ItemQuadro <|.. Cartao
     ItemQuadro <|.. CartaoDecorator
@@ -44,6 +49,7 @@ classDiagram
     CartaoDecorator <|-- ComPrazo
     CartaoDecorator <|-- ComPrioridade
     CartaoDecorator <|-- ComEtiqueta
+    TipoExtra ..> CartaoDecorator : cria
 ```
 
 ## Observer (comportamental)

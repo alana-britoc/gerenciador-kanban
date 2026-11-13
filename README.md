@@ -73,4 +73,5 @@ cd backend
 | GET | `/api/cartoes` | lista os cartões |
 | POST | `/api/cartoes` | cria um cartão (`tipo`, `titulo`, `descricao` opcional, `detalhe` obrigatório) |
 | PATCH | `/api/cartoes/{id}/coluna` | move o cartão (`coluna`: `A_FAZER`, `FAZENDO` ou `FEITO`) |
+| POST | `/api/cartoes/{id}/extras` | adiciona um extra (`tipo`: `PRAZO`, `PRIORIDADE` ou `ETIQUETA`; `valor`: data `AAAA-MM-DD`, `BAIXA`/`MEDIA`/`ALTA` ou o texto da etiqueta) |
 | DELETE | `/api/cartoes/{id}` | remove o cartão |
