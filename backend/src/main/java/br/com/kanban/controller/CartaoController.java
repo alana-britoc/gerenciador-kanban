@@ -6,7 +6,6 @@ import java.util.NoSuchElementException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import br.com.kanban.domain.Cartao;
 import br.com.kanban.domain.Coluna;
 import br.com.kanban.domain.TipoCartao;
 import br.com.kanban.patterns.estrutural.ItemQuadro;
@@ -40,7 +39,7 @@ public class CartaoController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Cartao criar(@Valid @RequestBody NovoCartao novo) {
+    public ItemQuadro criar(@Valid @RequestBody NovoCartao novo) {
         return service.criar(novo.tipo(), novo.titulo(), novo.descricao(), novo.detalhe());
     }
 

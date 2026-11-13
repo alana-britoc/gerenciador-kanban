@@ -54,16 +54,18 @@ public class CartaoService {
         return decorado;
     }
     // Factory Method
-    public Cartao criar(TipoCartao tipo, String titulo, String descricao, String detalhe) {
+    public ItemQuadro criar(TipoCartao tipo, String titulo, String descricao, String detalhe) {
         CartaoFactory factory = switch (tipo) {
             case TAREFA -> tarefaFactory;
             case BUG -> bugFactory;
             case MELHORIA -> melhoriaFactory;
         };
         Cartao cartao = factory.criar(proximoId.get(), titulo, descricao, detalhe);
+        ItemQuadro item = factory.decorarInicialmente(cartao);
         proximoId.incrementAndGet();
         cartoes.add(cartao);
-        return cartao;
+        decorados.put(cartao.getId(), item);
+        return item;
     }
 
     // TODO #3: avisar os observadores quando o cartao mudar de coluna

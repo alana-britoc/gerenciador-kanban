@@ -59,4 +59,14 @@ class CartaoControllerTest {
                         .content("{\"tipo\":\"ETIQUETA\",\"valor\":\"front\"}"))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void criarBugDevolvePrioridadeInicialAlta() throws Exception {
+        mvc.perform(post("/api/cartoes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"tipo\":\"BUG\",\"titulo\":\"Falha\",\"detalhe\":\"Abrir o quadro\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.tipo").value("BUG"))
+                .andExpect(jsonPath("$.extras.prioridade").value("ALTA"));
+    }
 }
