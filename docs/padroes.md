@@ -6,11 +6,13 @@
 
 **Solução:** uma fábrica abstrata `CartaoFactory` com o método `criar(...)`, e uma fábrica concreta por tipo. O `CartaoService` escolhe a fábrica pelo tipo e não precisa saber como cada cartão é montado.
 
+O método recebe `id`, `titulo`, `descricao` e `detalhe`. O campo `detalhe` é obrigatório e seu significado depende do tipo: critérios de aceite para TAREFA, passos para reprodução para BUG e justificativa para MELHORIA. Cada fábrica valida esse campo e cria o cartão do próprio tipo. O campo é devolvido pela API e exibido no quadro. Prioridade permanece fora desta issue, pois os extras combináveis serão tratados pelo Decorator.
+
 ```mermaid
 classDiagram
     class CartaoFactory {
         <<abstract>>
-        +criar(id, titulo, descricao) Cartao
+        +criar(id, titulo, descricao, detalhe) Cartao
     }
     CartaoFactory <|-- TarefaFactory
     CartaoFactory <|-- BugFactory

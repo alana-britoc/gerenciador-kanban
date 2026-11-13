@@ -6,13 +6,15 @@ public class Cartao {
     private final TipoCartao tipo;
     private String titulo;
     private String descricao;
+    private final String detalhe;
     private Coluna coluna;
 
-    public Cartao(long id, TipoCartao tipo, String titulo, String descricao) {
+    public Cartao(long id, TipoCartao tipo, String titulo, String descricao, String detalhe) {
         this.id = id;
         this.tipo = tipo;
         this.titulo = titulo;
         this.descricao = descricao;
+        this.detalhe = detalhe;
         this.coluna = Coluna.A_FAZER;
     }
 
@@ -20,6 +22,7 @@ public class Cartao {
     public TipoCartao getTipo() { return tipo; }
     public String getTitulo() { return titulo; }
     public String getDescricao() { return descricao; }
+    public String getDetalhe() { return detalhe; }
     public Coluna getColuna() { return coluna; }
 
     public void setTitulo(String titulo) { this.titulo = titulo; }

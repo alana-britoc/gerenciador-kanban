@@ -7,6 +7,7 @@ export default function Cartao({ cartao, onMover, onRemover }) {
       <span className="tipo">{cartao.tipo}</span>
       <h3>{cartao.titulo}</h3>
       {cartao.descricao && <p>{cartao.descricao}</p>}
+      {cartao.detalhe && <p><strong>{({ TAREFA: 'Critérios de aceite', BUG: 'Passos para reprodução', MELHORIA: 'Justificativa' })[cartao.tipo]}:</strong> {cartao.detalhe}</p>}
       <div className="acoes">
         <button disabled={i === 0} onClick={() => onMover(cartao.id, COLUNAS[i - 1])}>←</button>
         <button onClick={() => onRemover(cartao.id)}>remover</button>
