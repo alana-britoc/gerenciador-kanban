@@ -71,6 +71,6 @@ cd backend
 | Método | Rota | O que faz |
 | --- | --- | --- |
 | GET | `/api/cartoes` | lista os cartões |
-| POST | `/api/cartoes` | cria um cartão (`tipo`, `titulo`, `descricao`) |
+| POST | `/api/cartoes` | cria um cartão (`tipo`, `titulo`, `descricao` opcional, `detalhe` obrigatório) |
 | PATCH | `/api/cartoes/{id}/coluna` | move o cartão (`coluna`: `A_FAZER`, `FAZENDO` ou `FEITO`) |
 | DELETE | `/api/cartoes/{id}` | remove o cartão |

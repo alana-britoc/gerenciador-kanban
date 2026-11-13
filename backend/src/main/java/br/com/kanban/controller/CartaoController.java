@@ -24,7 +24,8 @@ public class CartaoController {
         this.service = service;
     }
 
-    public record NovoCartao(@NotNull TipoCartao tipo, @NotBlank String titulo, String descricao) {}
+    public record NovoCartao(@NotNull TipoCartao tipo, @NotBlank String titulo,
+                             String descricao, @NotBlank String detalhe) {}
 
     public record Movimento(@NotNull Coluna coluna) {}
 
@@ -36,7 +37,7 @@ public class CartaoController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Cartao criar(@Valid @RequestBody NovoCartao novo) {
-        return service.criar(novo.tipo(), novo.titulo(), novo.descricao());
+        return service.criar(novo.tipo(), novo.titulo(), novo.descricao(), novo.detalhe());
     }
 
     @PatchMapping("/{id}/coluna")

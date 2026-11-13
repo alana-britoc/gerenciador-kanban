@@ -10,6 +10,10 @@ import org.springframework.stereotype.Service;
 import br.com.kanban.domain.Cartao;
 import br.com.kanban.domain.Coluna;
 import br.com.kanban.domain.TipoCartao;
+import br.com.kanban.patterns.criacional.BugFactory;
+import br.com.kanban.patterns.criacional.CartaoFactory;
+import br.com.kanban.patterns.criacional.MelhoriaFactory;
+import br.com.kanban.patterns.criacional.TarefaFactory;
 
 // guarda tudo em memoria por enquanto
 @Service
@@ -17,19 +21,29 @@ public class CartaoService {
 
     private final List<Cartao> cartoes = new ArrayList<>();
     private final AtomicLong proximoId = new AtomicLong(1);
+    private final CartaoFactory tarefaFactory = new TarefaFactory();
+    private final CartaoFactory bugFactory = new BugFactory();
+    private final CartaoFactory melhoriaFactory = new MelhoriaFactory();
 
     public CartaoService() {
-        criar(TipoCartao.TAREFA, "Configurar o projeto", "Back em Spring Boot e front em React");
-        criar(TipoCartao.BUG, "Cartão não muda de coluna", "Exemplo de bug");
+        criar(TipoCartao.TAREFA, "Configurar o projeto", "Back em Spring Boot e front em React",
+                "API e quadro funcionando");
+        criar(TipoCartao.BUG, "Cartão não muda de coluna", "Exemplo de bug",
+                "Mover o cartão para Fazendo e verificar a coluna");
     }
 
     public List<Cartao> listar() {
         return List.copyOf(cartoes);
     }
-
-    // TODO #1: trocar esse new direto pela fabrica de cartoes
-    public Cartao criar(TipoCartao tipo, String titulo, String descricao) {
-        Cartao cartao = new Cartao(proximoId.getAndIncrement(), tipo, titulo, descricao);
+    // Factory Method
+    public Cartao criar(TipoCartao tipo, String titulo, String descricao, String detalhe) {
+        CartaoFactory factory = switch (tipo) {
+            case TAREFA -> tarefaFactory;
+            case BUG -> bugFactory;
+            case MELHORIA -> melhoriaFactory;
+        };
+        Cartao cartao = factory.criar(proximoId.get(), titulo, descricao, detalhe);
+        proximoId.incrementAndGet();
         cartoes.add(cartao);
         return cartao;
     }
