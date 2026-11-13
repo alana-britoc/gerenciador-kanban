@@ -19,7 +19,14 @@ export default function App() {
 
   useEffect(() => { carregar() }, [])
 
-  const acao = (fn) => (...args) => fn(...args).then(carregar).catch((e) => setErro(e.message))
+  const acao = (fn) => (...args) =>
+    fn(...args)
+      .then(carregar)
+      .then(() => true)
+      .catch((e) => {
+        setErro(e.message)
+        return false
+      })
 
   return (
     <main>
@@ -31,7 +38,13 @@ export default function App() {
           <section key={col.id} className="coluna">
             <h2>{col.nome}</h2>
             {cartoes.filter((c) => c.coluna === col.id).map((c) => (
-              <Cartao key={c.id} cartao={c} onMover={acao(api.mover)} onRemover={acao(api.remover)} />
+              <Cartao
+                key={c.id}
+                cartao={c}
+                onMover={acao(api.mover)}
+                onRemover={acao(api.remover)}
+                onAdicionarExtra={acao(api.adicionarExtra)}
+              />
             ))}
           </section>
         ))}

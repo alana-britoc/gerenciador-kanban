@@ -24,3 +24,18 @@ button:disabled { opacity: .4; cursor: default; }
 .acoes button { padding: 2px 8px; font-size: .8rem; }
 
 .erro { color: #d64545; }
+
+.extras { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+.extra { font-size: .72rem; line-height: 1; padding: 4px 7px; border-radius: 999px; background: #eceef1; color: #444; }
+.prioridade { font-weight: 600; }
+.prioridade-alta { background: #fde4e4; color: #b42318; }
+.prioridade-media { background: #fff1d6; color: #9a5b00; }
+.prioridade-baixa { background: #e3f4ea; color: #1f7a45; }
+.prazo.atrasado { background: #d64545; color: #fff; }
+.etiqueta { background: #e8eefc; color: #2b56b3; }
+
+.botao-extra { margin-top: 6px; padding: 2px 8px; font-size: .78rem; color: #555; border-style: dashed; }
+.novo-extra { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.novo-extra select, .novo-extra input { flex: 1; min-width: 0; padding: 4px 6px; border-radius: 6px; border: 1px solid #ccc; font: inherit; font-size: .8rem; }
+.novo-extra-acoes { display: flex; justify-content: flex-end; gap: 6px; width: 100%; }
+.novo-extra-acoes button { padding: 2px 8px; font-size: .78rem; }
