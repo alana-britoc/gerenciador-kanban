@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.*;
 import br.com.kanban.domain.Cartao;
 import br.com.kanban.domain.Coluna;
 import br.com.kanban.domain.TipoCartao;
+import br.com.kanban.patterns.estrutural.ItemQuadro;
+import br.com.kanban.patterns.estrutural.TipoExtra;
 import br.com.kanban.service.CartaoService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -29,8 +31,10 @@ public class CartaoController {
 
     public record Movimento(@NotNull Coluna coluna) {}
 
+    public record NovoExtra(@NotNull TipoExtra tipo, @NotBlank String valor) {}
+
     @GetMapping
-    public List<Cartao> listar() {
+    public List<ItemQuadro> listar() {
         return service.listar();
     }
 
@@ -41,8 +45,14 @@ public class CartaoController {
     }
 
     @PatchMapping("/{id}/coluna")
-    public Cartao mover(@PathVariable long id, @Valid @RequestBody Movimento movimento) {
-        return service.mover(id, movimento.coluna());
+    public ItemQuadro mover(@PathVariable long id, @Valid @RequestBody Movimento movimento) {
+        service.mover(id, movimento.coluna());
+        return service.item(id);
+    }
+
+    @PostMapping("/{id}/extras")
+    public ItemQuadro adicionarExtra(@PathVariable long id, @Valid @RequestBody NovoExtra extra) {
+        return service.adicionarExtra(id, extra.tipo(), extra.valor());
     }
 
     @DeleteMapping("/{id}")
@@ -54,6 +64,12 @@ public class CartaoController {
     @ExceptionHandler(NoSuchElementException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public String naoEncontrado(NoSuchElementException e) {
+        return e.getMessage();
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public String invalido(IllegalArgumentException e) {
         return e.getMessage();
     }
 }

@@ -1,7 +1,9 @@
 package br.com.kanban.service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -14,12 +16,15 @@ import br.com.kanban.patterns.criacional.BugFactory;
 import br.com.kanban.patterns.criacional.CartaoFactory;
 import br.com.kanban.patterns.criacional.MelhoriaFactory;
 import br.com.kanban.patterns.criacional.TarefaFactory;
+import br.com.kanban.patterns.estrutural.ItemQuadro;
+import br.com.kanban.patterns.estrutural.TipoExtra;
 
 // guarda tudo em memoria por enquanto
 @Service
 public class CartaoService {
 
     private final List<Cartao> cartoes = new ArrayList<>();
+    private final Map<Long, ItemQuadro> decorados = new HashMap<>();
     private final AtomicLong proximoId = new AtomicLong(1);
     private final CartaoFactory tarefaFactory = new TarefaFactory();
     private final CartaoFactory bugFactory = new BugFactory();
@@ -32,8 +37,21 @@ public class CartaoService {
                 "Mover o cartão para Fazendo e verificar a coluna");
     }
 
-    public List<Cartao> listar() {
-        return List.copyOf(cartoes);
+    public List<ItemQuadro> listar() {
+        return cartoes.stream()
+                .map(c -> decorados.getOrDefault(c.getId(), c))
+                .toList();
+    }
+
+    public ItemQuadro item(long id) {
+        Cartao cartao = buscar(id);
+        return decorados.getOrDefault(id, cartao);
+    }
+
+    public ItemQuadro adicionarExtra(long id, TipoExtra tipo, String valor) {
+        ItemQuadro decorado = tipo.aplicar(item(id), valor);
+        decorados.put(id, decorado);
+        return decorado;
     }
     // Factory Method
     public Cartao criar(TipoCartao tipo, String titulo, String descricao, String detalhe) {
@@ -57,6 +75,7 @@ public class CartaoService {
 
     public void remover(long id) {
         cartoes.remove(buscar(id));
+        decorados.remove(id);
     }
 
     private Cartao buscar(long id) {
