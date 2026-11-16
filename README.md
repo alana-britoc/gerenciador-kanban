@@ -14,7 +14,7 @@ Os detalhes e os diagramas de cada padrão estão em [`docs/padroes.md`](docs/pa
 
 ## Tecnologias
 
-- **Back:** Java 21 com Spring Boot (API REST), dados em memória
+- **Back:** Java 21 com Spring Boot (API REST), Spring Data JPA e banco H2 salvo em arquivo
 - **Front:** React com Vite
 
 ## Estrutura
@@ -23,8 +23,10 @@ Os detalhes e os diagramas de cada padrão estão em [`docs/padroes.md`](docs/pa
 gerenciador-kanban/
 ├── backend/                       # API em Spring Boot
 │   └── src/main/java/br/com/kanban/
+│       ├── config/                # cartões de exemplo do banco vazio
 │       ├── controller/            # endpoints REST
-│       ├── domain/                # Cartao, Coluna, TipoCartao
+│       ├── domain/                # Cartao (entidade), Coluna, TipoCartao
+│       ├── repository/            # acesso ao banco (Spring Data JPA)
 │       ├── service/               # regras do quadro
 │       └── patterns/
 │           ├── criacional/        # Factory Method
@@ -58,6 +60,8 @@ npm run dev
 ```
 
 O front encaminha as chamadas de `/api` para o back, então os dois precisam estar rodando.
+
+Os dados ficam em `backend/data/` (banco H2 embutido, não precisa instalar nada) e continuam lá quando o back reinicia. Na primeira vez, com o banco vazio, o back cria dois cartões de exemplo. Para voltar ao quadro inicial, pare o back e apague a pasta `backend/data/`. Os testes usam um banco só em memória e não mexem nessa pasta.
 
 **Testes do back:**
 
