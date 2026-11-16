@@ -6,6 +6,7 @@ import java.util.NoSuchElementException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import br.com.kanban.domain.Cartao;
 import br.com.kanban.domain.Coluna;
 import br.com.kanban.domain.TipoCartao;
 import br.com.kanban.patterns.estrutural.ItemQuadro;
@@ -14,6 +15,7 @@ import br.com.kanban.service.CartaoService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 @RestController
 @RequestMapping("/api/cartoes")
@@ -25,12 +27,15 @@ public class CartaoController {
         this.service = service;
     }
 
-    public record NovoCartao(@NotNull TipoCartao tipo, @NotBlank String titulo,
-                             String descricao, @NotBlank String detalhe) {}
+    public record NovoCartao(@NotNull TipoCartao tipo,
+                             @NotBlank @Size(max = Cartao.TAMANHO_TITULO) String titulo,
+                             @Size(max = Cartao.TAMANHO_TEXTO) String descricao,
+                             @NotBlank @Size(max = Cartao.TAMANHO_TEXTO) String detalhe) {}
 
     public record Movimento(@NotNull Coluna coluna) {}
 
-    public record NovoExtra(@NotNull TipoExtra tipo, @NotBlank String valor) {}
+    public record NovoExtra(@NotNull TipoExtra tipo,
+                            @NotBlank @Size(max = Cartao.TAMANHO_TITULO) String valor) {}
 
     @GetMapping
     public List<ItemQuadro> listar() {

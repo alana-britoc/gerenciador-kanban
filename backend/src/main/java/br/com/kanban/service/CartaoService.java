@@ -1,16 +1,15 @@
 package br.com.kanban.service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.concurrent.atomic.AtomicLong;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import br.com.kanban.domain.Cartao;
 import br.com.kanban.domain.Coluna;
+import br.com.kanban.domain.ExtraAplicado;
 import br.com.kanban.domain.TipoCartao;
 import br.com.kanban.patterns.criacional.BugFactory;
 import br.com.kanban.patterns.criacional.CartaoFactory;
@@ -18,72 +17,79 @@ import br.com.kanban.patterns.criacional.MelhoriaFactory;
 import br.com.kanban.patterns.criacional.TarefaFactory;
 import br.com.kanban.patterns.estrutural.ItemQuadro;
 import br.com.kanban.patterns.estrutural.TipoExtra;
+import br.com.kanban.repository.CartaoRepository;
 
-// guarda tudo em memoria por enquanto
 @Service
+@Transactional
 public class CartaoService {
 
-    private final List<Cartao> cartoes = new ArrayList<>();
-    private final Map<Long, ItemQuadro> decorados = new HashMap<>();
-    private final AtomicLong proximoId = new AtomicLong(1);
+    private final CartaoRepository repositorio;
     private final CartaoFactory tarefaFactory = new TarefaFactory();
     private final CartaoFactory bugFactory = new BugFactory();
     private final CartaoFactory melhoriaFactory = new MelhoriaFactory();
 
-    public CartaoService() {
-        criar(TipoCartao.TAREFA, "Configurar o projeto", "Back em Spring Boot e front em React",
-                "API e quadro funcionando");
-        criar(TipoCartao.BUG, "Cartão não muda de coluna", "Exemplo de bug",
-                "Mover o cartão para Fazendo e verificar a coluna");
+    public CartaoService(CartaoRepository repositorio) {
+        this.repositorio = repositorio;
     }
 
+    @Transactional(readOnly = true)
     public List<ItemQuadro> listar() {
-        return cartoes.stream()
-                .map(c -> decorados.getOrDefault(c.getId(), c))
+        return repositorio.findAll(Sort.by("id")).stream()
+                .map(this::decorar)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public ItemQuadro item(long id) {
-        Cartao cartao = buscar(id);
-        return decorados.getOrDefault(id, cartao);
+        return decorar(buscar(id));
     }
 
     public ItemQuadro adicionarExtra(long id, TipoExtra tipo, String valor) {
-        ItemQuadro decorado = tipo.aplicar(item(id), valor);
-        decorados.put(id, decorado);
+        Cartao cartao = buscar(id);
+        // aplica antes de registrar, para um valor inválido não ser salvo
+        ItemQuadro decorado = tipo.aplicar(decorar(cartao), valor);
+        cartao.registrarExtra(tipo, valor.trim());
+        repositorio.save(cartao);
         return decorado;
     }
+
     // Factory Method
     public ItemQuadro criar(TipoCartao tipo, String titulo, String descricao, String detalhe) {
-        CartaoFactory factory = switch (tipo) {
-            case TAREFA -> tarefaFactory;
-            case BUG -> bugFactory;
-            case MELHORIA -> melhoriaFactory;
-        };
-        Cartao cartao = factory.criar(proximoId.get(), titulo, descricao, detalhe);
-        ItemQuadro item = factory.decorarInicialmente(cartao);
-        proximoId.incrementAndGet();
-        cartoes.add(cartao);
-        decorados.put(cartao.getId(), item);
-        return item;
+        Cartao cartao = repositorio.save(fabrica(tipo).criar(titulo, descricao, detalhe));
+        return decorar(cartao);
     }
 
     // TODO #3: avisar os observadores quando o cartao mudar de coluna
     public Cartao mover(long id, Coluna destino) {
         Cartao cartao = buscar(id);
         cartao.setColuna(destino);
-        return cartao;
+        return repositorio.save(cartao);
     }
 
     public void remover(long id) {
-        cartoes.remove(buscar(id));
-        decorados.remove(id);
+        repositorio.delete(buscar(id));
+    }
+
+    private CartaoFactory fabrica(TipoCartao tipo) {
+        return switch (tipo) {
+            case TAREFA -> tarefaFactory;
+            case BUG -> bugFactory;
+            case MELHORIA -> melhoriaFactory;
+        };
+    }
+
+    // Decorator: remonta a pilha a partir da decoração inicial da fábrica
+    // e dos extras salvos, na ordem em que foram aplicados
+    private ItemQuadro decorar(Cartao cartao) {
+        ItemQuadro item = fabrica(cartao.getTipo()).decorarInicialmente(cartao);
+        for (ExtraAplicado extra : cartao.extrasAplicados()) {
+            item = extra.tipo().aplicar(item, extra.valor());
+        }
+        return item;
     }
 
     private Cartao buscar(long id) {
-        return cartoes.stream()
-                .filter(c -> c.getId() == id)
-                .findFirst()
+        return repositorio.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("cartão " + id + " não existe"));
     }
 }

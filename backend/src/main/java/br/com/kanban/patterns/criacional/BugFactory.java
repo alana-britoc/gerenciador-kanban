@@ -9,8 +9,8 @@ import br.com.kanban.patterns.estrutural.ItemQuadro;
 public class BugFactory extends CartaoFactory {
 
     @Override
-    public Cartao criar(long id, String titulo, String descricao, String detalhe) {
-        return new Cartao(id, TipoCartao.BUG, titulo, descricao,
+    public Cartao criar(String titulo, String descricao, String detalhe) {
+        return new Cartao(TipoCartao.BUG, titulo, descricao,
                 exigirDetalhe(detalhe, "passos para reprodução"));
     }
 

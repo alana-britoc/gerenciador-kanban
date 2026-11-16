@@ -6,13 +6,13 @@
 
 **Solução:** uma fábrica abstrata `CartaoFactory` com o método `criar(...)`, e uma fábrica concreta por tipo. O `CartaoService` escolhe a fábrica pelo tipo e não precisa saber como cada cartão é montado.
 
-O método recebe `id`, `titulo`, `descricao` e `detalhe`. O campo `detalhe` é obrigatório e seu significado depende do tipo: critérios de aceite para TAREFA, passos para reprodução para BUG e justificativa para MELHORIA. Cada fábrica valida esse campo e cria o cartão do próprio tipo. O campo é devolvido pela API e exibido no quadro. Prioridade permanece fora desta issue, pois os extras combináveis serão tratados pelo Decorator.
+O método recebe `titulo`, `descricao` e `detalhe`; o `id` é gerado pelo banco quando o `CartaoService` salva o cartão. O campo `detalhe` é obrigatório e seu significado depende do tipo: critérios de aceite para TAREFA, passos para reprodução para BUG e justificativa para MELHORIA. Cada fábrica valida esse campo e cria o cartão do próprio tipo. O campo é devolvido pela API e exibido no quadro. Prioridade permanece fora desta issue, pois os extras combináveis serão tratados pelo Decorator.
 
 ```mermaid
 classDiagram
     class CartaoFactory {
         <<abstract>>
-        +criar(id, titulo, descricao, detalhe) Cartao
+        +criar(titulo, descricao, detalhe) Cartao
     }
     CartaoFactory <|-- TarefaFactory
     CartaoFactory <|-- BugFactory
@@ -29,7 +29,7 @@ classDiagram
 
 O `Cartao` e o `CartaoDecorator` implementam `ItemQuadro`. O decorador repassa todas as chamadas para o item que envolve, e cada decorador concreto sobrescreve só o `getExtras()`, somando o seu extra aos extras do item de dentro. O cartão sem decorador devolve `Extras.NENHUM`. Quando o mesmo extra aparece duas vezes, vale o decorador mais externo; etiquetas se acumulam sem repetir.
 
-O `CartaoService` guarda o cartão original e a versão decorada de cada cartão. Ao criar um BUG, a `BugFactory` aplica `ComPrioridade(ALTA)` como decoração inicial; as demais fábricas não aplicam extras iniciais. O `POST /api/cartoes/{id}/extras` usa o `TipoExtra` para escolher o decorador e envolve a versão atual. Uma prioridade adicionada depois substitui a inicial, pois vale o decorador mais externo. Como o decorador consulta o cartão original, mover o cartão continua refletindo na versão decorada.
+Os decoradores não são salvos no banco. O `Cartao` é a entidade e guarda a lista de extras aplicados (`ExtraAplicado`: tipo e valor), na ordem em que foram adicionados. A cada leitura, o `CartaoService` remonta a pilha: começa pela decoração inicial da fábrica e, para cada extra salvo, usa o `TipoExtra` para envolver o item com o decorador correspondente. Ao criar um BUG, a `BugFactory` aplica `ComPrioridade(ALTA)` como decoração inicial; as demais fábricas não aplicam extras iniciais. O `POST /api/cartoes/{id}/extras` aplica o novo decorador sobre a versão atual (o que já valida o valor) e só então registra o extra no cartão. Uma prioridade adicionada depois substitui a inicial, pois vale o decorador mais externo. Como o decorador consulta o cartão original, mover o cartão continua refletindo na versão decorada.
 
 ```mermaid
 classDiagram

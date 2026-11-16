@@ -15,35 +15,35 @@ class CartaoFactoryTest {
     @Test
     void tarefaExigeCriteriosDeAceite() {
         CartaoFactory factory = new TarefaFactory();
-        Cartao cartao = factory.criar(1, "Configurar", "Descrição", "  API responde  ");
+        Cartao cartao = factory.criar("Configurar", "Descrição", "  API responde  ");
         assertEquals(TipoCartao.TAREFA, cartao.getTipo());
         assertEquals("API responde", cartao.getDetalhe());
         assertEquals("Descrição", cartao.getDescricao());
         assertEquals(Coluna.A_FAZER, cartao.getColuna());
         assertSame(cartao, factory.decorarInicialmente(cartao));
-        assertThrows(IllegalArgumentException.class, () -> factory.criar(2, "Configurar", "", " "));
+        assertThrows(IllegalArgumentException.class, () -> factory.criar("Configurar", "", " "));
     }
 
     @Test
     void bugExigePassosParaReproducao() {
         CartaoFactory factory = new BugFactory();
-        Cartao cartao = factory.criar(1, "Erro", "Descrição", "  Abrir o quadro  ");
+        Cartao cartao = factory.criar("Erro", "Descrição", "  Abrir o quadro  ");
         assertEquals(TipoCartao.BUG, cartao.getTipo());
         assertEquals("Abrir o quadro", cartao.getDetalhe());
         ItemQuadro item = factory.decorarInicialmente(cartao);
         assertEquals(Prioridade.ALTA, item.getExtras().prioridade());
         assertEquals(cartao.getId(), item.getId());
         assertEquals(Coluna.A_FAZER, item.getColuna());
-        assertThrows(IllegalArgumentException.class, () -> factory.criar(2, "Erro", "", null));
+        assertThrows(IllegalArgumentException.class, () -> factory.criar("Erro", "", null));
     }
 
     @Test
     void melhoriaExigeJustificativa() {
         CartaoFactory factory = new MelhoriaFactory();
-        Cartao cartao = factory.criar(1, "Busca", "Descrição", "  Encontrar cartões  ");
+        Cartao cartao = factory.criar("Busca", "Descrição", "  Encontrar cartões  ");
         assertEquals(TipoCartao.MELHORIA, cartao.getTipo());
         assertEquals("Encontrar cartões", cartao.getDetalhe());
         assertSame(cartao, factory.decorarInicialmente(cartao));
-        assertThrows(IllegalArgumentException.class, () -> factory.criar(2, "Busca", "", ""));
+        assertThrows(IllegalArgumentException.class, () -> factory.criar("Busca", "", ""));
     }
 }

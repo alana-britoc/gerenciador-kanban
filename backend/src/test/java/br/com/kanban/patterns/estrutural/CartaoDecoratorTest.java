@@ -15,7 +15,7 @@ import br.com.kanban.domain.TipoCartao;
 
 class CartaoDecoratorTest {
 
-    private final Cartao cartao = new Cartao(1, TipoCartao.BUG, "Login falha", "", "Abrir a tela de login");
+    private final Cartao cartao = new Cartao(TipoCartao.BUG, "Login falha", "", "Abrir a tela de login");
 
     @Test
     void cartaoSemDecoradorNaoTemExtras() {
@@ -38,7 +38,7 @@ class CartaoDecoratorTest {
     void decoradorRepassaOsDadosDoCartao() {
         ItemQuadro item = new ComPrioridade(new ComEtiqueta(cartao, "back"), Prioridade.BAIXA);
 
-        assertEquals(1, item.getId());
+        assertEquals(cartao.getId(), item.getId());
         assertEquals(TipoCartao.BUG, item.getTipo());
         assertEquals("Login falha", item.getTitulo());
         assertEquals("Abrir a tela de login", item.getDetalhe());
