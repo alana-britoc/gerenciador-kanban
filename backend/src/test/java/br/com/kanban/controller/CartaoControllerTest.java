@@ -7,15 +7,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
-import br.com.kanban.service.CartaoService;
-
-@WebMvcTest(CartaoController.class)
-@Import(CartaoService.class)
+// sobe a aplicação com o banco em memória dos testes; cada teste desfaz o que gravou
+@SpringBootTest
+@AutoConfigureMockMvc
+@Transactional
 class CartaoControllerTest {
 
     @Autowired
@@ -68,5 +69,14 @@ class CartaoControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.tipo").value("BUG"))
                 .andExpect(jsonPath("$.extras.prioridade").value("ALTA"));
+    }
+
+    @Test
+    void tituloLongoDemaisDevolve400() throws Exception {
+        String titulo = "a".repeat(256);
+        mvc.perform(post("/api/cartoes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"tipo\":\"TAREFA\",\"titulo\":\"" + titulo + "\",\"detalhe\":\"ok\"}"))
+                .andExpect(status().isBadRequest());
     }
 }
