@@ -100,8 +100,6 @@ public class CartaoService {
         };
     }
 
-    // Decorator: remonta a pilha a partir da decoração inicial da fábrica
-    // e dos extras salvos, na ordem em que foram aplicados
     private ItemQuadro decorar(Cartao cartao) {
         ItemQuadro item = fabrica(cartao.getTipo()).decorarInicialmente(cartao);
         for (ExtraAplicado extra : cartao.extrasAplicados()) {

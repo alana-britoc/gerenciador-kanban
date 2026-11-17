@@ -1,0 +1,9 @@
+[33mcommit e6c49616257bfa43ee9aaf238420cc8fb83cf5e0[m[33m ([m[1;31morigin/feature/3-observer-movimento-cartoes[m[33m)[m
+Author: luiztcn78 <luiztenorio789@gmail.com>
+Date:   Mon Nov 16 19:31:04 2026 -0300
+
+    feat: AtividadeControllerTest
+
+ .../java/br/com/kanban/service/CartaoService.java  | 28 [32m+++++++++++++++++++[m[31m---[m
+ .../kanban/controller/AtividadeControllerTest.java |  0
+ 2 files changed, 25 insertions(+), 3 deletions(-)
