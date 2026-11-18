@@ -1,38 +1,71 @@
 import { useState } from 'react'
+import Seletor from './Seletor'
 
-export default function NovoCartao({ onCriar }) {
-  const [titulo, setTitulo] = useState('')
+const TIPOS = [
+  { valor: 'TAREFA', nome: 'Tarefa' },
+  { valor: 'BUG', nome: 'Bug' },
+  { valor: 'MELHORIA', nome: 'Melhoria' },
+]
+
+const ROTULOS = {
+  TAREFA: 'Critérios de aceite',
+  BUG: 'Passos para reprodução',
+  MELHORIA: 'Justificativa da melhoria',
+}
+
+export default function NovoCartao({ onCriar, onFechar }) {
   const [tipo, setTipo] = useState('TAREFA')
+  const [titulo, setTitulo] = useState('')
   const [descricao, setDescricao] = useState('')
   const [detalhe, setDetalhe] = useState('')
+  const [enviando, setEnviando] = useState(false)
 
-  const rotulos = {
-    TAREFA: 'Critérios de aceite',
-    BUG: 'Passos para reprodução',
-    MELHORIA: 'Justificativa da melhoria',
-  }
-
-  function enviar(e) {
+  async function enviar(e) {
     e.preventDefault()
     if (!titulo.trim() || !detalhe.trim()) return
-    onCriar({ tipo, titulo: titulo.trim(), descricao: descricao.trim(), detalhe: detalhe.trim() })
-    setTitulo('')
-    setDescricao('')
-    setDetalhe('')
+    setEnviando(true)
+    const ok = await onCriar({ tipo, titulo: titulo.trim(), descricao: descricao.trim(), detalhe: detalhe.trim() })
+    setEnviando(false)
+    if (ok) onFechar()
   }
 
   return (
-    <form className="novo" onSubmit={enviar}>
-      <input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Novo cartão" required />
-      <select value={tipo} onChange={(e) => { setTipo(e.target.value); setDetalhe('') }}>
-        <option value="TAREFA">Tarefa</option>
-        <option value="BUG">Bug</option>
-        <option value="MELHORIA">Melhoria</option>
-      </select>
-      <input value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição (opcional)" />
-      <input value={detalhe} onChange={(e) => setDetalhe(e.target.value)} placeholder={rotulos[tipo]}
-        aria-label={rotulos[tipo]} required />
-      <button type="submit">Adicionar</button>
+    <form className="form-cartao" onSubmit={enviar}>
+      <Seletor
+        rotulo="Tipo do cartão"
+        opcoes={TIPOS}
+        valor={tipo}
+        onMudar={(novo) => {
+          setTipo(novo)
+          setDetalhe('')
+        }}
+      />
+      <input
+        className="campo"
+        value={titulo}
+        onChange={(e) => setTitulo(e.target.value)}
+        placeholder="Título"
+        aria-label="Título"
+        maxLength={255}
+        required
+        autoFocus
+      />
+      <textarea
+        className="campo"
+        rows={2}
+        value={descricao}
+        onChange={(e) => setDescricao(e.target.value)}
+        placeholder="Descrição (opcional)"
+        aria-label="Descrição"
+      />
+      <label className="rotulo">
+        {ROTULOS[tipo]}
+        <textarea className="campo" rows={2} value={detalhe} onChange={(e) => setDetalhe(e.target.value)} required />
+      </label>
+      <div className="form-acoes">
+        <button type="button" className="botao" onClick={onFechar}>Cancelar</button>
+        <button type="submit" className="botao botao-primario" disabled={enviando}>Criar cartão</button>
+      </div>
     </form>
   )
 }
