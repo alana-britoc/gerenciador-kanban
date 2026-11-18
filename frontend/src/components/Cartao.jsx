@@ -1,32 +1,116 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { Bug, Ellipsis, Flag, Lightbulb, ListChecks, Tag, Trash2 } from 'lucide-react'
+import { COLUNAS } from '../colunas'
 import ExtrasCartao from './ExtrasCartao'
 import NovoExtra from './NovoExtra'
 
-const COLUNAS = ['A_FAZER', 'FAZENDO', 'FEITO']
+const TIPOS = {
+  TAREFA: { nome: 'Tarefa', Icone: ListChecks, detalhe: 'Critérios de aceite' },
+  BUG: { nome: 'Bug', Icone: Bug, detalhe: 'Passos para reprodução' },
+  MELHORIA: { nome: 'Melhoria', Icone: Lightbulb, detalhe: 'Justificativa' },
+}
+
+const PRIORIDADES = { ALTA: 'Alta', MEDIA: 'Média', BAIXA: 'Baixa' }
 
 export default function Cartao({ cartao, onMover, onRemover, onAdicionarExtra }) {
+  const [menuAberto, setMenuAberto] = useState(false)
   const [editandoExtra, setEditandoExtra] = useState(false)
-  const i = COLUNAS.indexOf(cartao.coluna)
+  const caixa = useRef(null)
+  const { nome, Icone, detalhe } = TIPOS[cartao.tipo]
+  const prioridade = cartao.extras?.prioridade
+
+  useEffect(() => {
+    if (!menuAberto) return
+    const clicouFora = (e) => {
+      if (!caixa.current?.contains(e.target)) setMenuAberto(false)
+    }
+    const apertouEsc = (e) => {
+      if (e.key === 'Escape') setMenuAberto(false)
+    }
+    window.addEventListener('pointerdown', clicouFora)
+    window.addEventListener('keydown', apertouEsc)
+    return () => {
+      window.removeEventListener('pointerdown', clicouFora)
+      window.removeEventListener('keydown', apertouEsc)
+    }
+  }, [menuAberto])
+
+  function escolher(fn) {
+    setMenuAberto(false)
+    fn()
+  }
+
   return (
-    <div className={`cartao cartao-${cartao.tipo.toLowerCase()}`}>
-      <span className="tipo">{cartao.tipo}</span>
+    <article className={`cartao${menuAberto ? ' cartao-em-foco' : ''}`}>
+      <div className="pilulas">
+        <span className={`pilula pilula-tipo tipo-${cartao.tipo.toLowerCase()}`}>
+          <Icone size={12} /> {nome}
+        </span>
+        {prioridade && (
+          <span className={`pilula prioridade-${prioridade.toLowerCase()}`}>
+            <Flag size={11} /> {PRIORIDADES[prioridade]}
+          </span>
+        )}
+      </div>
+
       <h3>{cartao.titulo}</h3>
-      <ExtrasCartao extras={cartao.extras} coluna={cartao.coluna} />
-      {cartao.descricao && <p>{cartao.descricao}</p>}
-      {cartao.detalhe && <p><strong>{({ TAREFA: 'Critérios de aceite', BUG: 'Passos para reprodução', MELHORIA: 'Justificativa' })[cartao.tipo]}:</strong> {cartao.detalhe}</p>}
-      {editandoExtra ? (
+      {cartao.descricao && <p className="cartao-descricao">{cartao.descricao}</p>}
+      {cartao.detalhe && (
+        <p className="cartao-detalhe">
+          <strong>{detalhe}</strong>
+          {cartao.detalhe}
+        </p>
+      )}
+
+      {editandoExtra && (
         <NovoExtra
           onAdicionar={(tipo, valor) => onAdicionarExtra(cartao.id, tipo, valor)}
-          onCancelar={() => setEditandoExtra(false)}
+          onFechar={() => setEditandoExtra(false)}
         />
-      ) : (
-        <button className="botao-extra" onClick={() => setEditandoExtra(true)}>+ extra</button>
       )}
-      <div className="acoes">
-        <button disabled={i === 0} onClick={() => onMover(cartao.id, COLUNAS[i - 1])}>←</button>
-        <button onClick={() => onRemover(cartao.id)}>remover</button>
-        <button disabled={i === COLUNAS.length - 1} onClick={() => onMover(cartao.id, COLUNAS[i + 1])}>→</button>
+
+      <ExtrasCartao id={cartao.id} extras={cartao.extras} coluna={cartao.coluna} />
+
+      <div ref={caixa}>
+        <button
+          type="button"
+          className="botao-menu"
+          aria-label={`Ações de ${cartao.titulo}`}
+          aria-haspopup="menu"
+          aria-expanded={menuAberto}
+          onClick={() => setMenuAberto((v) => !v)}
+        >
+          <Ellipsis size={16} />
+        </button>
+        {menuAberto && (
+          <div role="menu" className="menu">
+            <p className="menu-titulo">Mover para</p>
+            {COLUNAS.filter((col) => col.id !== cartao.coluna).map((col) => (
+              <button
+                key={col.id}
+                type="button"
+                role="menuitem"
+                style={{ '--cor-coluna': col.cor }}
+                onClick={() => escolher(() => onMover(cartao.id, col.id))}
+              >
+                <span className="ponto" /> {col.nome}
+              </button>
+            ))}
+            <hr />
+            <button type="button" role="menuitem" onClick={() => escolher(() => setEditandoExtra(true))}>
+              <Tag size={14} /> Adicionar extra
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              className="menu-perigo"
+              onClick={() => escolher(() => onRemover(cartao.id))}
+            >
+              <Trash2 size={14} /> Remover cartão
+            </button>
+          </div>
+        )}
       </div>
-    </div>
+    </article>
   )
 }

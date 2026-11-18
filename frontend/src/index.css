@@ -1,2 +1,117 @@
-:root { font-family: system-ui, sans-serif; color: #1d1d1f; background: #fff; }
-body { margin: 0; }
+:root {
+  --fonte: "DM Sans", system-ui, sans-serif;
+
+  --tinta: #1a1d1f;
+  --titulo: #0d062d;
+  --texto: #333333;
+  --suave: #787486;
+  --claro: #8899a8;
+  --borda: #e7ebfb;
+  --borda-cartao: #eef0f6;
+  --lavanda: #e9ecf6;
+  --marinho: #23235f;
+  --fundo-detalhe: #f6f7fb;
+
+  --azul: #3b5bdb;
+  --azul-escuro: #3350c7;
+  --azul-suave: rgba(59, 91, 219, 0.14);
+  --petroleo: #238899;
+  --perigo: #d2504b;
+
+  --col-a-fazer: #4f6bed;
+  --col-fazendo: #f2a33a;
+  --col-feito: #3fa87a;
+
+  --altura-topo: 56px;
+  --sombra-cartao: 0 1px 3px rgba(35, 35, 95, 0.08);
+  --sombra-flutuante: 0 12px 30px rgba(35, 35, 95, 0.16);
+
+  font-family: var(--fonte);
+  font-optical-sizing: auto;
+  color: var(--texto);
+  background: #ffffff;
+  -webkit-font-smoothing: antialiased;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--azul);
+  outline-offset: 2px;
+}
+
+.fundo {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background: #ffffff;
+}
+
+.fundo span {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+}
+
+.fundo span:nth-child(1) {
+  width: 70vw;
+  height: 60vw;
+  left: -22vw;
+  top: -28vw;
+  background: rgba(139, 165, 255, 0.32);
+}
+
+.fundo span:nth-child(2) {
+  width: 50vw;
+  height: 50vw;
+  right: -18vw;
+  top: 6vh;
+  background: rgba(124, 196, 240, 0.26);
+}
+
+.fundo span:nth-child(3) {
+  width: 60vw;
+  height: 45vw;
+  left: 18vw;
+  bottom: -30vw;
+  background: rgba(170, 190, 255, 0.3);
+}
+
+.vidro {
+  background: rgba(255, 255, 255, 0.6);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
