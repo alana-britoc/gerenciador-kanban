@@ -7,7 +7,7 @@ import NovoCartao from './NovoCartao'
 
 const nomeDaColuna = (id) => COLUNAS.find((c) => c.id === id)?.nome ?? id
 
-export default function Quadro({ cartoes, onCriar, onMover, onRemover, onAdicionarExtra }) {
+export default function Quadro({ cartoes, onAbrir, onCriar, onMover, onRemover, onAdicionarExtra }) {
   const [criando, setCriando] = useState(false)
   const [arrastado, setArrastado] = useState(null)
 
@@ -58,6 +58,7 @@ export default function Quadro({ cartoes, onCriar, onMover, onRemover, onAdicion
                 <Cartao
                   key={c.id}
                   cartao={c}
+                  onAbrir={onAbrir}
                   onMover={onMover}
                   onRemover={onRemover}
                   onAdicionarExtra={onAdicionarExtra}
