@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import * as api from './api/cartoes'
+import { escutarQuadro } from './api/tempoReal'
 import Cartao from './components/Cartao'
 import NovoCartao from './components/NovoCartao'
 import './App.css'
@@ -18,6 +19,9 @@ export default function App() {
     api.listar().then(setCartoes).then(() => setErro(null)).catch(() => setErro('Back fora do ar?'))
 
   useEffect(() => { carregar() }, [])
+
+  // quando um cartão muda de coluna em outra aba, recarrega o quadro
+  useEffect(() => escutarQuadro(() => carregar()), [])
 
   const acao = (fn) => (...args) =>
     fn(...args)
