@@ -120,6 +120,7 @@
   border-radius: 14px;
   background: rgba(244, 246, 253, 0.7);
   box-shadow: 0 1px 2px rgba(35, 35, 95, 0.04);
+  transition: background 0.15s ease;
 }
 
 .coluna-topo {
@@ -227,6 +228,62 @@
 
 .cartao-em-foco {
   z-index: 10;
+}
+
+.cartao-arrastavel {
+  cursor: grab;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.cartao-origem,
+.cartao-origem:hover {
+  border: 2px dashed rgba(59, 91, 219, 0.45);
+  background: rgba(59, 91, 219, 0.04);
+  box-shadow: none;
+  transform: none;
+}
+
+.cartao-origem > * {
+  visibility: hidden;
+}
+
+.cartao-flutuante,
+.cartao-flutuante:hover {
+  cursor: grabbing;
+  transform: rotate(3deg) scale(1.04);
+  box-shadow: 0 26px 50px rgba(35, 35, 95, 0.28);
+  animation: levantar 0.15s ease-out;
+}
+
+@keyframes levantar {
+  from {
+    transform: none;
+    box-shadow: var(--sombra-cartao);
+  }
+}
+
+.coluna-alvo {
+  background: rgba(255, 255, 255, 0.85);
+  outline: 2px dashed var(--cor-coluna);
+  outline-offset: -2px;
+}
+
+.solte-aqui {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 64px;
+  padding: 8px;
+  border: 2px dashed var(--cor-coluna);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--cor-coluna) 8%, transparent);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  color: var(--suave);
+  animation: aparecer 0.15s ease-out;
 }
 
 @keyframes aparecer {
