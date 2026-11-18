@@ -70,6 +70,24 @@ public class CartaoService {
         repositorio.delete(buscar(id));
     }
 
+    public ItemQuadro editar(long id, String titulo, String descricao, String detalhe) {
+        Cartao cartao = buscar(id);
+        cartao.editarTextos(titulo.trim(), descricao == null ? null : descricao.trim(), detalhe.trim());
+        return decorar(repositorio.save(cartao));
+    }
+
+    public ItemQuadro removerExtra(long id, TipoExtra tipo, String valor) {
+        boolean etiqueta = tipo == TipoExtra.ETIQUETA;
+        if (etiqueta && (valor == null || valor.isBlank())) {
+            throw new IllegalArgumentException("informe qual etiqueta remover");
+        }
+        Cartao cartao = buscar(id);
+        if (!cartao.removerExtras(tipo, etiqueta ? valor.trim() : null)) {
+            throw new NoSuchElementException("o cartão não tem esse extra");
+        }
+        return decorar(repositorio.save(cartao));
+    }
+
     private CartaoFactory fabrica(TipoCartao tipo) {
         return switch (tipo) {
             case TAREFA -> tarefaFactory;
