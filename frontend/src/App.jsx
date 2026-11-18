@@ -1,12 +1,38 @@
 import { useEffect, useState } from 'react'
-import { CircleAlert, SquareKanban, X } from 'lucide-react'
+import { CalendarDays, CircleAlert, Columns3, SquareKanban, X } from 'lucide-react'
 import * as api from './api/cartoes'
+import Calendario from './components/Calendario'
 import Quadro from './components/Quadro'
 import './App.css'
+
+const VISOES = [
+  { id: 'quadro', nome: 'Quadro', Icone: Columns3, descricao: 'Arraste os cartões entre as colunas ou use o menu ⋯ de cada um' },
+  { id: 'calendario', nome: 'Calendário', Icone: CalendarDays, descricao: 'Os cartões no dia do seu prazo' },
+]
+
+const CHAVE_VISAO = 'kanban.visao'
+
+function visaoSalva() {
+  try {
+    const salva = localStorage.getItem(CHAVE_VISAO)
+    return VISOES.some((v) => v.id === salva) ? salva : 'quadro'
+  } catch {
+    return 'quadro'
+  }
+}
 
 export default function App() {
   const [cartoes, setCartoes] = useState([])
   const [erro, setErro] = useState(null)
+  const [visao, setVisao] = useState(visaoSalva)
+  const visaoAtual = VISOES.find((v) => v.id === visao)
+
+  function trocarVisao(id) {
+    setVisao(id)
+    try {
+      localStorage.setItem(CHAVE_VISAO, id)
+    } catch {}
+  }
 
   const carregar = () =>
     api.listar().then(setCartoes).then(() => setErro(null)).catch(() => setErro('Back fora do ar?'))
@@ -54,8 +80,23 @@ export default function App() {
 
       <main className="pagina">
         <div className="pagina-titulo">
-          <h1>Quadro</h1>
-          <p>Arraste os cartões entre as colunas ou use o menu ⋯ de cada um</p>
+          <div>
+            <h1>{visaoAtual.nome}</h1>
+            <p>{visaoAtual.descricao}</p>
+          </div>
+          <div role="tablist" aria-label="Forma de visualizar" className="seletor seletor-visao">
+            {VISOES.map(({ id, nome, Icone }) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={visao === id}
+                onClick={() => trocarVisao(id)}
+              >
+                <Icone size={14} /> {nome}
+              </button>
+            ))}
+          </div>
         </div>
 
         {erro && (
@@ -68,13 +109,17 @@ export default function App() {
           </div>
         )}
 
-        <Quadro
-          cartoes={cartoes}
-          onCriar={acao(api.criar)}
-          onMover={mover}
-          onRemover={acao(api.remover)}
-          onAdicionarExtra={acao(api.adicionarExtra)}
-        />
+        {visao === 'calendario' ? (
+          <Calendario cartoes={cartoes} />
+        ) : (
+          <Quadro
+            cartoes={cartoes}
+            onCriar={acao(api.criar)}
+            onMover={mover}
+            onRemover={acao(api.remover)}
+            onAdicionarExtra={acao(api.adicionarExtra)}
+          />
+        )}
       </main>
     </>
   )

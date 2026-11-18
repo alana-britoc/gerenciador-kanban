@@ -62,6 +62,39 @@
   padding: 20px 24px 40px;
 }
 
+.pagina-titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.seletor-visao button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.seletor-visao button[aria-selected="true"] {
+  background: #ffffff;
+  color: var(--titulo);
+  box-shadow: 0 1px 3px rgba(35, 35, 95, 0.12);
+}
+
+.so-leitor {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .pagina-titulo h1 {
   margin: 0;
   font-size: 22px;
@@ -71,7 +104,7 @@
 }
 
 .pagina-titulo p {
-  margin: 4px 0 16px;
+  margin: 4px 0 0;
   font-size: 13px;
   color: var(--suave);
 }
@@ -621,9 +654,295 @@
   box-shadow: 0 1px 3px rgba(35, 35, 95, 0.12);
 }
 
+.calendario-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 14px;
+  align-items: start;
+}
+
+.calendario,
+.painel {
+  min-width: 0;
+  padding: 14px;
+  border-color: rgba(231, 235, 251, 0.9);
+  border-radius: 14px;
+  background: rgba(244, 246, 253, 0.7);
+  box-shadow: 0 1px 2px rgba(35, 35, 95, 0.04);
+}
+
+.calendario-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.calendario-topo h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--titulo);
+}
+
+.calendario-navegacao {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.botao-icone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--borda);
+  border-radius: 50%;
+  background: #ffffff;
+  color: var(--titulo);
+  transition: transform 0.15s ease;
+}
+
+.botao-icone:hover {
+  transform: translateY(-1px);
+}
+
+.grade {
+  width: 100%;
+  table-layout: fixed;
+  border-spacing: 0;
+  overflow: hidden;
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.grade th {
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--borda);
+  background: var(--fundo-detalhe);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--suave);
+}
+
+.grade td {
+  height: 104px;
+  padding: 6px;
+  border-right: 1px solid var(--borda);
+  border-bottom: 1px solid var(--borda);
+  vertical-align: top;
+}
+
+.grade td:last-child {
+  border-right: 0;
+}
+
+.grade tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.grade td.fora-do-mes {
+  background: #fafbfe;
+}
+
+.grade-numero {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--titulo);
+}
+
+.fora-do-mes .grade-numero {
+  color: var(--claro);
+}
+
+.hoje .grade-numero {
+  background: var(--azul);
+  color: #ffffff;
+}
+
+.eventos {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.evento {
+  display: flex;
+  min-width: 0;
+  padding: 3px 6px;
+  border-left: 3px solid var(--cor-coluna);
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--cor-coluna) 12%, #ffffff);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--titulo);
+}
+
+.evento-titulo {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.evento-vencido {
+  border-left-color: var(--perigo);
+  background: #fdecec;
+  color: #b42318;
+}
+
+.evento-feito .evento-titulo {
+  color: var(--suave);
+  text-decoration: line-through;
+}
+
+.marcas,
+.agenda {
+  display: none;
+}
+
+.calendario-lateral {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.painel h2 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--titulo);
+}
+
+.painel-vazio {
+  margin: 0;
+  font-size: 12px;
+  color: var(--suave);
+}
+
+.legenda,
+.sem-prazo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  color: var(--texto);
+}
+
+.legenda li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legenda-vencido {
+  --cor-coluna: var(--perigo);
+}
+
+.sem-prazo li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 8px;
+  padding: 7px 8px;
+  border: 1px solid var(--borda-cartao);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.sem-prazo-titulo {
+  overflow: hidden;
+  font-weight: 500;
+  color: var(--titulo);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sem-prazo-coluna {
+  grid-column: 2;
+  font-size: 11px;
+  color: var(--suave);
+}
+
+@media (max-width: 960px) {
+  .calendario-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 @media (max-width: 760px) {
   .topo-conteudo {
     padding: 0 16px;
+  }
+
+  .grade td {
+    height: 48px;
+    padding: 4px 2px;
+    text-align: center;
+  }
+
+  .grade .eventos {
+    display: none;
+  }
+
+  .marcas {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2px;
+    margin-top: 2px;
+  }
+
+  .marcas .ponto {
+    width: 6px;
+    height: 6px;
+  }
+
+  .agenda {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .agenda-dia h3 {
+    margin: 0 0 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--suave);
+    text-transform: capitalize;
+  }
+
+  .agenda-dia .agenda-hoje {
+    color: var(--azul);
+  }
+
+  .agenda-vazia {
+    margin: 0;
+    font-size: 12px;
+    text-align: center;
+    color: var(--suave);
   }
 
   .pagina {
