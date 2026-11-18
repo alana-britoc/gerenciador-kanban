@@ -8,7 +8,7 @@ O objetivo é aplicar três padrões do GoF, um de cada tipo:
 | --- | --- | --- |
 | Criacional | **Factory Method** | criação dos tipos de cartão (tarefa, bug, melhoria) |
 | Estrutural | **Decorator** | extras de um cartão (prazo, prioridade, etiqueta) sem uma subclasse para cada combinação |
-| Comportamental | **Observer** | quando um cartão muda de coluna, o histórico e as notificações são avisados |
+| Comportamental | **Observer** | quando um cartão muda de coluna, o histórico, as notificações e os quadros abertos (por WebSocket) são avisados |
 
 Os detalhes e os diagramas de cada padrão estão em [`docs/padroes.md`](docs/padroes.md).
 
@@ -59,7 +59,7 @@ npm install
 npm run dev
 ```
 
-O front encaminha as chamadas de `/api` para o back, então os dois precisam estar rodando.
+O front encaminha as chamadas de `/api` e o WebSocket `/ws` para o back, então os dois precisam estar rodando.
 
 Os dados ficam em `backend/data/` (banco H2 embutido, não precisa instalar nada) e continuam lá quando o back reinicia. Na primeira vez, com o banco vazio, o back cria dois cartões de exemplo. Para voltar ao quadro inicial, pare o back e apague a pasta `backend/data/`. Os testes usam um banco só em memória e não mexem nessa pasta.
 
@@ -81,3 +81,5 @@ cd backend
 | DELETE | `/api/cartoes/{id}` | remove o cartão |
 | PATCH | `/api/cartoes/{id}` | edita os textos do cartão (`titulo`, `descricao` opcional, `detalhe`) |
 | DELETE | `/api/cartoes/{id}/extras/{tipo}` | remove um extra (`PRAZO`, `PRIORIDADE` ou `ETIQUETA`; para etiqueta, informe `?valor=`) |
+
+**Tempo real:** o WebSocket `ws://localhost:8080/ws/quadro` envia uma mensagem a cada cartão movido, por exemplo `{"evento":"CARTAO_MOVIDO","cartaoId":1,"origem":"A_FAZER","destino":"FEITO","horario":"..."}`. O quadro escuta essa rota e se atualiza sozinho, então mover um cartão numa aba muda as outras abas abertas.

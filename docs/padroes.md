@@ -74,6 +74,14 @@ classDiagram
     CartaoService --> ObservadorCartao : avisa
     ObservadorCartao <|.. HistoricoObserver
     ObservadorCartao <|.. NotificacaoObserver
+    ObservadorCartao <|.. QuadroTempoRealObserver
+    QuadroTempoRealObserver --> QuadroWebSocketHandler : envia a todas as abas
 ```
 
 No front, o histórico e as notificações aparecem em um painel ao lado do quadro.
+
+### Quadro em tempo real
+
+O `QuadroTempoRealObserver` é mais um observador: a cada movimento, ele publica uma mensagem pequena (`evento`, `cartaoId`, `origem`, `destino`, `horario`) no WebSocket `/ws/quadro`, e o `QuadroWebSocketHandler` a envia para todas as abas conectadas. O front passa a ser um observador também: ao receber a mensagem, recarrega o quadro. Como o `CartaoService` só conhece a interface `ObservadorCartao`, nada mudou nele para isso.
+
+A mensagem só é enviada depois que a transação do movimento faz commit. Assim, um movimento desfeito não chega a ninguém, e a aba que recarrega o quadro já recebe a coluna nova.
