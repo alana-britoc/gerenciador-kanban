@@ -33,7 +33,7 @@ function formatarDia(iso) {
 
 const estaVencido = (cartao, hoje) => cartao.coluna !== 'FEITO' && cartao.extras.prazo < hoje
 
-function Evento({ cartao, hoje }) {
+function Evento({ cartao, hoje, onAbrir }) {
   const coluna = colunaDe(cartao.coluna)
   const feito = cartao.coluna === 'FEITO'
   const vencido = estaVencido(cartao, hoje)
@@ -41,17 +41,21 @@ function Evento({ cartao, hoje }) {
   if (vencido) classes.push('evento-vencido')
   if (feito) classes.push('evento-feito')
   return (
-    <li
-      className={classes.join(' ')}
-      style={{ '--cor-coluna': coluna.cor }}
-      title={`${cartao.titulo} · ${coluna.nome}${vencido ? ' · prazo vencido' : ''}`}
-    >
-      <span className="evento-titulo">{cartao.titulo}</span>
+    <li>
+      <button
+        type="button"
+        className={classes.join(' ')}
+        style={{ '--cor-coluna': coluna.cor }}
+        title={`${cartao.titulo} · ${coluna.nome}${vencido ? ' · prazo vencido' : ''}`}
+        onClick={() => onAbrir(cartao.id)}
+      >
+        <span className="evento-titulo">{cartao.titulo}</span>
+      </button>
     </li>
   )
 }
 
-export default function Calendario({ cartoes }) {
+export default function Calendario({ cartoes, onAbrir }) {
   const [hoje] = useState(() => paraIso(new Date()))
   const [mes, setMes] = useState(() => primeiroDoMes(new Date()))
 
@@ -113,7 +117,7 @@ export default function Calendario({ cartoes }) {
                       {doDia.length > 0 && (
                         <>
                           <ul className="eventos">
-                            {doDia.map((c) => <Evento key={c.id} cartao={c} hoje={hoje} />)}
+                            {doDia.map((c) => <Evento key={c.id} cartao={c} hoje={hoje} onAbrir={onAbrir} />)}
                           </ul>
                           <span className="marcas" aria-hidden="true">
                             {doDia.map((c) => (
@@ -142,7 +146,7 @@ export default function Calendario({ cartoes }) {
               <div key={dia} className="agenda-dia">
                 <h3 className={dia === hoje ? 'agenda-hoje' : undefined}>{formatarDia(dia)}</h3>
                 <ul className="eventos">
-                  {porDia.get(dia).map((c) => <Evento key={c.id} cartao={c} hoje={hoje} />)}
+                  {porDia.get(dia).map((c) => <Evento key={c.id} cartao={c} hoje={hoje} onAbrir={onAbrir} />)}
                 </ul>
               </div>
             ))
@@ -173,10 +177,12 @@ export default function Calendario({ cartoes }) {
               {semPrazo.map((c) => {
                 const coluna = colunaDe(c.coluna)
                 return (
-                  <li key={c.id} style={{ '--cor-coluna': coluna.cor }}>
-                    <span className="ponto" />
-                    <span className="sem-prazo-titulo">{c.titulo}</span>
-                    <span className="sem-prazo-coluna">{coluna.nome}</span>
+                  <li key={c.id}>
+                    <button type="button" style={{ '--cor-coluna': coluna.cor }} onClick={() => onAbrir(c.id)}>
+                      <span className="ponto" />
+                      <span className="sem-prazo-titulo">{c.titulo}</span>
+                      <span className="sem-prazo-coluna">{coluna.nome}</span>
+                    </button>
                   </li>
                 )
               })}

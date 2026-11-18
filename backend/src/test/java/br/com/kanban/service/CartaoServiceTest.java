@@ -129,6 +129,58 @@ class CartaoServiceTest {
     }
 
     @Test
+    void editarTrocaOsTextosEMantemTipoColunaEExtras() {
+        ItemQuadro c = service.criar(TipoCartao.TAREFA, "Antigo", "Descrição antiga", "Critério antigo");
+        service.adicionarExtra(c.getId(), TipoExtra.ETIQUETA, "front");
+        service.mover(c.getId(), Coluna.FAZENDO);
+
+        service.editar(c.getId(), "  Novo título ", " ", " Critério novo ");
+        recarregarDoBanco();
+
+        ItemQuadro lido = service.item(c.getId());
+        assertEquals("Novo título", lido.getTitulo());
+        assertEquals("", lido.getDescricao());
+        assertEquals("Critério novo", lido.getDetalhe());
+        assertEquals(TipoCartao.TAREFA, lido.getTipo());
+        assertEquals(Coluna.FAZENDO, lido.getColuna());
+        assertEquals(List.of("front"), lido.getExtras().etiquetas());
+    }
+
+    @Test
+    void removerPrazoEEtiquetaTiraSoOExtraPedido() {
+        ItemQuadro c = service.criar(TipoCartao.TAREFA, "Tela", "", "Quadro aparece");
+        service.adicionarExtra(c.getId(), TipoExtra.PRAZO, "2026-12-01");
+        service.adicionarExtra(c.getId(), TipoExtra.ETIQUETA, "front");
+        service.adicionarExtra(c.getId(), TipoExtra.ETIQUETA, "urgente");
+
+        service.removerExtra(c.getId(), TipoExtra.PRAZO, null);
+        ItemQuadro item = service.removerExtra(c.getId(), TipoExtra.ETIQUETA, " front ");
+        recarregarDoBanco();
+
+        assertEquals(new Extras(null, null, List.of("urgente")), item.getExtras());
+        assertEquals(item.getExtras(), service.item(c.getId()).getExtras());
+    }
+
+    @Test
+    void removerPrioridadeDeBugVoltaParaAPrioridadeInicial() {
+        ItemQuadro bug = service.criar(TipoCartao.BUG, "Falha", "", "Abrir o quadro");
+        service.adicionarExtra(bug.getId(), TipoExtra.PRIORIDADE, "BAIXA");
+
+        ItemQuadro item = service.removerExtra(bug.getId(), TipoExtra.PRIORIDADE, null);
+
+        assertEquals(Prioridade.ALTA, item.getExtras().prioridade());
+    }
+
+    @Test
+    void removerExtraQueNaoExisteFalha() {
+        ItemQuadro c = service.criar(TipoCartao.TAREFA, "Tela", "", "Quadro aparece");
+
+        assertThrows(NoSuchElementException.class, () -> service.removerExtra(c.getId(), TipoExtra.PRAZO, null));
+        assertThrows(NoSuchElementException.class, () -> service.removerExtra(c.getId(), TipoExtra.ETIQUETA, "front"));
+        assertThrows(IllegalArgumentException.class, () -> service.removerExtra(c.getId(), TipoExtra.ETIQUETA, " "));
+    }
+
+    @Test
     void extraInvalidoNaoESalvo() {
         ItemQuadro c = service.criar(TipoCartao.TAREFA, "Tela", "", "Quadro aparece");
 

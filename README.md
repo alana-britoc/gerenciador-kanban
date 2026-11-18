@@ -79,3 +79,5 @@ cd backend
 | PATCH | `/api/cartoes/{id}/coluna` | move o cartão (`coluna`: `A_FAZER`, `FAZENDO` ou `FEITO`) |
 | POST | `/api/cartoes/{id}/extras` | adiciona um extra (`tipo`: `PRAZO`, `PRIORIDADE` ou `ETIQUETA`; `valor`: data `AAAA-MM-DD`, `BAIXA`/`MEDIA`/`ALTA` ou o texto da etiqueta) |
 | DELETE | `/api/cartoes/{id}` | remove o cartão |
+| PATCH | `/api/cartoes/{id}` | edita os textos do cartão (`titulo`, `descricao` opcional, `detalhe`) |
+| DELETE | `/api/cartoes/{id}/extras/{tipo}` | remove um extra (`PRAZO`, `PRIORIDADE` ou `ETIQUETA`; para etiqueta, informe `?valor=`) |

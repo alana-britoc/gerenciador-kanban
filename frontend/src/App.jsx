@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { CalendarDays, CircleAlert, Columns3, SquareKanban, X } from 'lucide-react'
 import * as api from './api/cartoes'
 import Calendario from './components/Calendario'
+import DetalhesCartao from './components/DetalhesCartao'
 import Quadro from './components/Quadro'
 import './App.css'
 
@@ -25,7 +26,9 @@ export default function App() {
   const [cartoes, setCartoes] = useState([])
   const [erro, setErro] = useState(null)
   const [visao, setVisao] = useState(visaoSalva)
+  const [abertoId, setAbertoId] = useState(null)
   const visaoAtual = VISOES.find((v) => v.id === visao)
+  const cartaoAberto = cartoes.find((c) => c.id === abertoId)
 
   function trocarVisao(id) {
     setVisao(id)
@@ -110,14 +113,28 @@ export default function App() {
         )}
 
         {visao === 'calendario' ? (
-          <Calendario cartoes={cartoes} />
+          <Calendario cartoes={cartoes} onAbrir={setAbertoId} />
         ) : (
           <Quadro
             cartoes={cartoes}
+            onAbrir={setAbertoId}
             onCriar={acao(api.criar)}
             onMover={mover}
             onRemover={acao(api.remover)}
             onAdicionarExtra={acao(api.adicionarExtra)}
+          />
+        )}
+
+        {cartaoAberto && (
+          <DetalhesCartao
+            key={cartaoAberto.id}
+            cartao={cartaoAberto}
+            onFechar={() => setAbertoId(null)}
+            onSalvar={acao(api.editar)}
+            onMover={mover}
+            onAdicionarExtra={acao(api.adicionarExtra)}
+            onRemoverExtra={acao(api.removerExtra)}
+            onRemover={acao(api.remover)}
           />
         )}
       </main>

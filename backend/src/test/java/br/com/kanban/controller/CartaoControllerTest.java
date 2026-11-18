@@ -1,5 +1,6 @@
 package br.com.kanban.controller;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -77,6 +78,56 @@ class CartaoControllerTest {
         mvc.perform(post("/api/cartoes")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"tipo\":\"TAREFA\",\"titulo\":\"" + titulo + "\",\"detalhe\":\"ok\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void editarDevolveOCartaoComOsTextosNovos() throws Exception {
+        adicionar("ETIQUETA", "front");
+
+        mvc.perform(patch("/api/cartoes/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"titulo\":\"Título novo\",\"descricao\":\"Outra descrição\",\"detalhe\":\"Outro critério\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.titulo").value("Título novo"))
+                .andExpect(jsonPath("$.descricao").value("Outra descrição"))
+                .andExpect(jsonPath("$.detalhe").value("Outro critério"))
+                .andExpect(jsonPath("$.extras.etiquetas[0]").value("front"));
+    }
+
+    @Test
+    void editarComTituloVazioDevolve400() throws Exception {
+        mvc.perform(patch("/api/cartoes/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"titulo\":\" \",\"detalhe\":\"Outro critério\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void removerExtraDevolveOCartaoSemOExtra() throws Exception {
+        adicionar("PRAZO", "2026-12-01");
+        adicionar("ETIQUETA", "front");
+        adicionar("ETIQUETA", "back");
+
+        mvc.perform(delete("/api/cartoes/1/extras/PRAZO"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.extras.prazo").doesNotExist());
+
+        mvc.perform(delete("/api/cartoes/1/extras/ETIQUETA").param("valor", "front"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.extras.etiquetas.length()").value(1))
+                .andExpect(jsonPath("$.extras.etiquetas[0]").value("back"));
+    }
+
+    @Test
+    void removerExtraQueNaoExisteDevolve404() throws Exception {
+        mvc.perform(delete("/api/cartoes/1/extras/PRAZO"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void removerEtiquetaSemDizerQualDevolve400() throws Exception {
+        mvc.perform(delete("/api/cartoes/1/extras/ETIQUETA"))
                 .andExpect(status().isBadRequest());
     }
 }
