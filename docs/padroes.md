@@ -31,6 +31,8 @@ O `Cartao` e o `CartaoDecorator` implementam `ItemQuadro`. O decorador repassa t
 
 Os decoradores não são salvos no banco. O `Cartao` é a entidade e guarda a lista de extras aplicados (`ExtraAplicado`: tipo e valor), na ordem em que foram adicionados. A cada leitura, o `CartaoService` remonta a pilha: começa pela decoração inicial da fábrica e, para cada extra salvo, usa o `TipoExtra` para envolver o item com o decorador correspondente. Ao criar um BUG, a `BugFactory` aplica `ComPrioridade(ALTA)` como decoração inicial; as demais fábricas não aplicam extras iniciais. O `POST /api/cartoes/{id}/extras` aplica o novo decorador sobre a versão atual (o que já valida o valor) e só então registra o extra no cartão. Uma prioridade adicionada depois substitui a inicial, pois vale o decorador mais externo. Como o decorador consulta o cartão original, mover o cartão continua refletindo na versão decorada.
 
+Remover um extra (`DELETE /api/cartoes/{id}/extras/{tipo}`) é deixar de aplicar o decorador correspondente: o extra sai da lista salva no cartão e a pilha é remontada sem ele. Por isso, remover a prioridade de um BUG faz ela voltar para ALTA, que é a decoração inicial da `BugFactory`.
+
 ```mermaid
 classDiagram
     class ItemQuadro {

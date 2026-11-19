@@ -85,4 +85,14 @@ public class Cartao implements ItemQuadro {
     public void registrarExtra(TipoExtra tipo, String valor) {
         extrasAplicados.add(new ExtraAplicado(tipo, valor));
     }
+
+    public void editarTextos(String titulo, String descricao, String detalhe) {
+        this.titulo = titulo;
+        this.descricao = descricao;
+        this.detalhe = detalhe;
+    }
+
+    public boolean removerExtras(TipoExtra tipo, String valor) {
+        return extrasAplicados.removeIf(extra -> extra.tipo() == tipo && (valor == null || extra.valor().equals(valor)));
+    }
 }
