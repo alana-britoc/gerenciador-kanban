@@ -5,9 +5,13 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import br.com.kanban.domain.Cartao;
 import br.com.kanban.domain.Coluna;
@@ -26,6 +30,8 @@ import br.com.kanban.repository.CartaoRepository;
 @Service
 @Transactional
 public class CartaoService {
+
+    private static final Logger log = LoggerFactory.getLogger(CartaoService.class);
 
     private final CartaoRepository repositorio;
     private final CartaoFactory tarefaFactory = new TarefaFactory();
@@ -73,23 +79,44 @@ public class CartaoService {
         observadores.remove(observador);
     }
 
-    private void notificar(MovimentoCartaoEvento evento) {
-        observadores.forEach(o -> o.aoMoverCartao(evento));
-    }
-
     public Cartao mover(long id, Coluna destino) {
         Cartao cartao = buscar(id);
         Coluna origem = cartao.getColuna();
         cartao.setColuna(destino);
         Cartao salvo = repositorio.save(cartao);
         if (origem != destino) {
-            notificar(new MovimentoCartaoEvento(salvo, origem, destino, LocalDateTime.now()));
+            notificarAposCommit(new MovimentoCartaoEvento(salvo, origem, destino, LocalDateTime.now()));
         }
         return salvo;
     }
 
     public void remover(long id) {
         repositorio.delete(buscar(id));
+    }
+
+    // Só avisa os observadores se a transação for confirmada; um rollback não gera evento
+    private void notificarAposCommit(MovimentoCartaoEvento evento) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    notificar(evento);
+                }
+            });
+        } else {
+            notificar(evento);
+        }
+    }
+
+    // A falha de um observador não impede os demais de receberem o evento
+    private void notificar(MovimentoCartaoEvento evento) {
+        for (ObservadorCartao observador : observadores) {
+            try {
+                observador.aoMoverCartao(evento);
+            } catch (RuntimeException e) {
+                log.warn("Observador {} falhou: {}", observador.getClass().getSimpleName(), e.getMessage());
+            }
+        }
     }
 
     private CartaoFactory fabrica(TipoCartao tipo) {
@@ -100,6 +127,8 @@ public class CartaoService {
         };
     }
 
+    // Decorator: remonta a pilha a partir da decoração inicial da fábrica
+    // e dos extras salvos, na ordem em que foram aplicados
     private ItemQuadro decorar(Cartao cartao) {
         ItemQuadro item = fabrica(cartao.getTipo()).decorarInicialmente(cartao);
         for (ExtraAplicado extra : cartao.extrasAplicados()) {
