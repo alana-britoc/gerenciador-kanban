@@ -20,3 +20,6 @@ export const mover = (id, coluna) =>
 export const remover = (id) => req(`${BASE}/${id}`, { method: 'DELETE' })
 export const adicionarExtra = (id, tipo, valor) =>
   req(`${BASE}/${id}/extras`, { method: 'POST', body: JSON.stringify({ tipo, valor }) })
+export const editar = (id, dados) => req(`${BASE}/${id}`, { method: 'PATCH', body: JSON.stringify(dados) })
+export const removerExtra = (id, tipo, valor) =>
+  req(`${BASE}/${id}/extras/${tipo}${valor ? `?valor=${encodeURIComponent(valor)}` : ''}`, { method: 'DELETE' })

@@ -33,6 +33,10 @@ public class CartaoController {
                              @Size(max = Cartao.TAMANHO_TEXTO) String descricao,
                              @NotBlank @Size(max = Cartao.TAMANHO_TEXTO) String detalhe) {}
 
+    public record EdicaoCartao(@NotBlank @Size(max = Cartao.TAMANHO_TITULO) String titulo,
+                               @Size(max = Cartao.TAMANHO_TEXTO) String descricao,
+                               @NotBlank @Size(max = Cartao.TAMANHO_TEXTO) String detalhe) {}
+
     public record Movimento(@NotNull Coluna coluna) {}
 
     public record NovoExtra(@NotNull TipoExtra tipo,
@@ -64,6 +68,17 @@ public class CartaoController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void remover(@PathVariable long id) {
         service.remover(id);
+    }
+
+    @PatchMapping("/{id}")
+    public ItemQuadro editar(@PathVariable long id, @Valid @RequestBody EdicaoCartao edicao) {
+        return service.editar(id, edicao.titulo(), edicao.descricao(), edicao.detalhe());
+    }
+
+    @DeleteMapping("/{id}/extras/{tipo}")
+    public ItemQuadro removerExtra(@PathVariable long id, @PathVariable TipoExtra tipo,
+                                   @RequestParam(required = false) String valor) {
+        return service.removerExtra(id, tipo, valor);
     }
 
     @ExceptionHandler(NoSuchElementException.class)
