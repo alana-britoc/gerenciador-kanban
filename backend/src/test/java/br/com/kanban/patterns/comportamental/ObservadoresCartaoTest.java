@@ -19,6 +19,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import br.com.kanban.domain.Coluna;
 import br.com.kanban.domain.TipoCartao;
 import br.com.kanban.patterns.estrutural.ItemQuadro;
+import br.com.kanban.repository.CartaoRepository;
 import br.com.kanban.service.CartaoService;
 
 // sem transação no teste: os eventos só saem depois do commit do serviço
@@ -29,6 +30,9 @@ class ObservadoresCartaoTest {
 
     @Autowired
     private CartaoService service;
+
+    @Autowired
+    private CartaoRepository repositorio;
 
     @Autowired
     private PlatformTransactionManager transacoes;
@@ -42,10 +46,12 @@ class ObservadoresCartaoTest {
         service.adicionarObservador(notificacao);
     }
 
+    // como os testes gravam de verdade, apaga os cartões para não vazar para outros testes
     @AfterEach
     void remover() {
         service.removerObservador(historico);
         service.removerObservador(notificacao);
+        repositorio.deleteAll();
     }
 
     @Test

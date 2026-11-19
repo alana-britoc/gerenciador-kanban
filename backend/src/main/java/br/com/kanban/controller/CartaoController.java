@@ -12,6 +12,7 @@ import br.com.kanban.domain.TipoCartao;
 import br.com.kanban.patterns.estrutural.ItemQuadro;
 import br.com.kanban.patterns.estrutural.TipoExtra;
 import br.com.kanban.service.CartaoService;
+import br.com.kanban.service.ColunaCheiaException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -89,6 +90,12 @@ public class CartaoController {
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public String invalido(IllegalArgumentException e) {
+        return e.getMessage();
+    }
+
+    @ExceptionHandler(ColunaCheiaException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public String colunaCheia(ColunaCheiaException e) {
         return e.getMessage();
     }
 }
