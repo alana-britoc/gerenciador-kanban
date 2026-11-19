@@ -1,16 +1,24 @@
 package br.com.kanban.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import br.com.kanban.domain.Cartao;
 import br.com.kanban.domain.Coluna;
 import br.com.kanban.domain.ExtraAplicado;
 import br.com.kanban.domain.TipoCartao;
+import br.com.kanban.patterns.comportamental.MovimentoCartaoEvento;
+import br.com.kanban.patterns.comportamental.ObservadorCartao;
 import br.com.kanban.patterns.criacional.BugFactory;
 import br.com.kanban.patterns.criacional.CartaoFactory;
 import br.com.kanban.patterns.criacional.MelhoriaFactory;
@@ -23,10 +31,13 @@ import br.com.kanban.repository.CartaoRepository;
 @Transactional
 public class CartaoService {
 
+    private static final Logger log = LoggerFactory.getLogger(CartaoService.class);
+
     private final CartaoRepository repositorio;
     private final CartaoFactory tarefaFactory = new TarefaFactory();
     private final CartaoFactory bugFactory = new BugFactory();
     private final CartaoFactory melhoriaFactory = new MelhoriaFactory();
+    private final List<ObservadorCartao> observadores = new CopyOnWriteArrayList<>();
 
     public CartaoService(CartaoRepository repositorio) {
         this.repositorio = repositorio;
@@ -59,15 +70,53 @@ public class CartaoService {
         return decorar(cartao);
     }
 
-    // TODO #3: avisar os observadores quando o cartao mudar de coluna
+    // Observer: o serviço só conhece a interface, não os observadores concretos
+    public void adicionarObservador(ObservadorCartao observador) {
+        observadores.add(observador);
+    }
+
+    public void removerObservador(ObservadorCartao observador) {
+        observadores.remove(observador);
+    }
+
     public Cartao mover(long id, Coluna destino) {
         Cartao cartao = buscar(id);
+        Coluna origem = cartao.getColuna();
         cartao.setColuna(destino);
-        return repositorio.save(cartao);
+        Cartao salvo = repositorio.save(cartao);
+        if (origem != destino) {
+            notificarAposCommit(new MovimentoCartaoEvento(salvo, origem, destino, LocalDateTime.now()));
+        }
+        return salvo;
     }
 
     public void remover(long id) {
         repositorio.delete(buscar(id));
+    }
+
+    // Só avisa os observadores se a transação for confirmada; um rollback não gera evento
+    private void notificarAposCommit(MovimentoCartaoEvento evento) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    notificar(evento);
+                }
+            });
+        } else {
+            notificar(evento);
+        }
+    }
+
+    // A falha de um observador não impede os demais de receberem o evento
+    private void notificar(MovimentoCartaoEvento evento) {
+        for (ObservadorCartao observador : observadores) {
+            try {
+                observador.aoMoverCartao(evento);
+            } catch (RuntimeException e) {
+                log.warn("Observador {} falhou: {}", observador.getClass().getSimpleName(), e.getMessage());
+            }
+        }
     }
 
     public ItemQuadro editar(long id, String titulo, String descricao, String detalhe) {
