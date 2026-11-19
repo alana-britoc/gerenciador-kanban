@@ -3,7 +3,9 @@ import { CalendarDays, CircleAlert, Columns3, SquareKanban, X } from 'lucide-rea
 import * as api from './api/cartoes'
 import Calendario from './components/Calendario'
 import DetalhesCartao from './components/DetalhesCartao'
+import Filtros from './components/Filtros'
 import Quadro from './components/Quadro'
+import { FILTROS_VAZIOS, aplicarFiltros, temFiltro } from './filtros'
 import './App.css'
 
 const VISOES = [
@@ -27,8 +29,11 @@ export default function App() {
   const [erro, setErro] = useState(null)
   const [visao, setVisao] = useState(visaoSalva)
   const [abertoId, setAbertoId] = useState(null)
+  const [filtros, setFiltros] = useState(FILTROS_VAZIOS)
   const visaoAtual = VISOES.find((v) => v.id === visao)
   const cartaoAberto = cartoes.find((c) => c.id === abertoId)
+  const visiveis = aplicarFiltros(cartoes, filtros)
+  const filtrando = temFiltro(filtros)
 
   function trocarVisao(id) {
     setVisao(id)
@@ -112,11 +117,14 @@ export default function App() {
           </div>
         )}
 
+        <Filtros cartoes={cartoes} filtros={filtros} onMudar={setFiltros} visiveis={visiveis.length} />
+
         {visao === 'calendario' ? (
-          <Calendario cartoes={cartoes} onAbrir={setAbertoId} />
+          <Calendario cartoes={visiveis} onAbrir={setAbertoId} />
         ) : (
           <Quadro
-            cartoes={cartoes}
+            cartoes={visiveis}
+            filtrando={filtrando}
             onAbrir={setAbertoId}
             onCriar={acao(api.criar)}
             onMover={mover}
