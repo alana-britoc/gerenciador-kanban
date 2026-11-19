@@ -11,18 +11,27 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import br.com.kanban.domain.Coluna;
 import br.com.kanban.domain.TipoCartao;
 import br.com.kanban.patterns.estrutural.ItemQuadro;
 import br.com.kanban.service.CartaoService;
 
+// sem transação no teste: os eventos só saem depois do commit do serviço
 @DataJpaTest
+@Transactional(propagation = Propagation.NOT_SUPPORTED)
 @Import(CartaoService.class)
 class ObservadoresCartaoTest {
 
     @Autowired
     private CartaoService service;
+
+    @Autowired
+    private PlatformTransactionManager transacoes;
 
     private final HistoricoObserver historico = new HistoricoObserver();
     private final NotificacaoObserver notificacao = new NotificacaoObserver();
@@ -88,5 +97,37 @@ class ObservadoresCartaoTest {
 
         assertEquals(1, eventos.size());
         assertEquals(2, historico.registros().size());
+    }
+
+    @Test
+    void rollbackNaoGeraEvento() {
+        ItemQuadro c = service.criar(TipoCartao.TAREFA, "Tela", "", "Quadro aparece");
+
+        assertThrows(IllegalStateException.class,
+                () -> new TransactionTemplate(transacoes).executeWithoutResult(status -> {
+                    service.mover(c.getId(), Coluna.FEITO);
+                    throw new IllegalStateException("falha depois de mover");
+                }));
+
+        assertTrue(historico.registros().isEmpty());
+        assertTrue(notificacao.notificacoes().isEmpty());
+    }
+
+    @Test
+    void falhaDeUmObservadorNaoImpedeOsOutros() {
+        ObservadorCartao quebrado = evento -> {
+            throw new IllegalStateException("observador com defeito");
+        };
+        service.adicionarObservador(quebrado);
+        ItemQuadro c = service.criar(TipoCartao.TAREFA, "Tela", "", "Quadro aparece");
+
+        try {
+            assertDoesNotThrow(() -> service.mover(c.getId(), Coluna.FEITO));
+        } finally {
+            service.removerObservador(quebrado);
+        }
+
+        assertEquals(1, historico.registros().size());
+        assertEquals(1, notificacao.notificacoes().size());
     }
 }
