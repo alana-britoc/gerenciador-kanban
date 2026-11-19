@@ -1,15 +1,41 @@
 import { useEffect, useState } from 'react'
-import { CircleAlert, Plus, SquareKanban, X } from 'lucide-react'
+import { CalendarDays, CircleAlert, Columns3, SquareKanban, X } from 'lucide-react'
 import * as api from './api/cartoes'
-import { COLUNAS } from './colunas'
-import Cartao from './components/Cartao'
-import NovoCartao from './components/NovoCartao'
+import Calendario from './components/Calendario'
+import DetalhesCartao from './components/DetalhesCartao'
+import Quadro from './components/Quadro'
 import './App.css'
+
+const VISOES = [
+  { id: 'quadro', nome: 'Quadro', Icone: Columns3, descricao: 'Arraste os cartões entre as colunas ou use o menu ⋯ de cada um' },
+  { id: 'calendario', nome: 'Calendário', Icone: CalendarDays, descricao: 'Os cartões no dia do seu prazo' },
+]
+
+const CHAVE_VISAO = 'kanban.visao'
+
+function visaoSalva() {
+  try {
+    const salva = localStorage.getItem(CHAVE_VISAO)
+    return VISOES.some((v) => v.id === salva) ? salva : 'quadro'
+  } catch {
+    return 'quadro'
+  }
+}
 
 export default function App() {
   const [cartoes, setCartoes] = useState([])
   const [erro, setErro] = useState(null)
-  const [criando, setCriando] = useState(false)
+  const [visao, setVisao] = useState(visaoSalva)
+  const [abertoId, setAbertoId] = useState(null)
+  const visaoAtual = VISOES.find((v) => v.id === visao)
+  const cartaoAberto = cartoes.find((c) => c.id === abertoId)
+
+  function trocarVisao(id) {
+    setVisao(id)
+    try {
+      localStorage.setItem(CHAVE_VISAO, id)
+    } catch {}
+  }
 
   const carregar = () =>
     api.listar().then(setCartoes).then(() => setErro(null)).catch(() => setErro('Back fora do ar?'))
@@ -24,6 +50,13 @@ export default function App() {
         setErro(e.message)
         return false
       })
+
+  async function mover(id, coluna) {
+    setCartoes((atuais) => atuais.map((c) => (c.id === id ? { ...c, coluna } : c)))
+    const ok = await acao(api.mover)(id, coluna)
+    if (!ok) api.listar().then(setCartoes).catch(() => {})
+    return ok
+  }
 
   return (
     <>
@@ -50,8 +83,23 @@ export default function App() {
 
       <main className="pagina">
         <div className="pagina-titulo">
-          <h1>Quadro</h1>
-          <p>Tarefas, bugs e melhorias do projeto</p>
+          <div>
+            <h1>{visaoAtual.nome}</h1>
+            <p>{visaoAtual.descricao}</p>
+          </div>
+          <div role="tablist" aria-label="Forma de visualizar" className="seletor seletor-visao">
+            {VISOES.map(({ id, nome, Icone }) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={visao === id}
+                onClick={() => trocarVisao(id)}
+              >
+                <Icone size={14} /> {nome}
+              </button>
+            ))}
+          </div>
         </div>
 
         {erro && (
@@ -64,50 +112,31 @@ export default function App() {
           </div>
         )}
 
-        <div className="quadro">
-          {COLUNAS.map((col) => {
-            const daColuna = cartoes.filter((c) => c.coluna === col.id)
-            const comFormulario = col.id === 'A_FAZER' && criando
-            return (
-              <section key={col.id} className="coluna vidro" aria-label={col.nome} style={{ '--cor-coluna': col.cor }}>
-                <header className="coluna-topo">
-                  <span className="ponto" />
-                  <h2>{col.nome}</h2>
-                  <span className="contador">{daColuna.length}</span>
-                  {col.id === 'A_FAZER' && (
-                    <button
-                      type="button"
-                      className="botao-adicionar"
-                      aria-label={criando ? 'Fechar novo cartão' : 'Novo cartão'}
-                      aria-expanded={criando}
-                      onClick={() => setCriando((v) => !v)}
-                    >
-                      <Plus size={14} />
-                    </button>
-                  )}
-                </header>
+        {visao === 'calendario' ? (
+          <Calendario cartoes={cartoes} onAbrir={setAbertoId} />
+        ) : (
+          <Quadro
+            cartoes={cartoes}
+            onAbrir={setAbertoId}
+            onCriar={acao(api.criar)}
+            onMover={mover}
+            onRemover={acao(api.remover)}
+            onAdicionarExtra={acao(api.adicionarExtra)}
+          />
+        )}
 
-                <div className="coluna-lista">
-                  {comFormulario && <NovoCartao onCriar={acao(api.criar)} onFechar={() => setCriando(false)} />}
-                  {daColuna.map((c) => (
-                    <Cartao
-                      key={c.id}
-                      cartao={c}
-                      onMover={acao(api.mover)}
-                      onRemover={acao(api.remover)}
-                      onAdicionarExtra={acao(api.adicionarExtra)}
-                    />
-                  ))}
-                  {daColuna.length === 0 && !comFormulario && (
-                    <p className="coluna-vazia">
-                      {col.id === 'A_FAZER' ? 'Nenhum cartão. Use o + para criar.' : 'Nenhum cartão aqui'}
-                    </p>
-                  )}
-                </div>
-              </section>
-            )
-          })}
-        </div>
+        {cartaoAberto && (
+          <DetalhesCartao
+            key={cartaoAberto.id}
+            cartao={cartaoAberto}
+            onFechar={() => setAbertoId(null)}
+            onSalvar={acao(api.editar)}
+            onMover={mover}
+            onAdicionarExtra={acao(api.adicionarExtra)}
+            onRemoverExtra={acao(api.removerExtra)}
+            onRemover={acao(api.remover)}
+          />
+        )}
       </main>
     </>
   )

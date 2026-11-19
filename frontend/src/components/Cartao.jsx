@@ -1,23 +1,72 @@
 import { useEffect, useRef, useState } from 'react'
-import { Bug, Ellipsis, Flag, Lightbulb, ListChecks, Tag, Trash2 } from 'lucide-react'
+import { useDraggable } from '@dnd-kit/core'
+import { Ellipsis, Flag, PanelRightOpen, Tag, Trash2 } from 'lucide-react'
 import { COLUNAS } from '../colunas'
+import { TIPOS } from '../tipos'
 import ExtrasCartao from './ExtrasCartao'
 import NovoExtra from './NovoExtra'
 
-const TIPOS = {
-  TAREFA: { nome: 'Tarefa', Icone: ListChecks, detalhe: 'Critérios de aceite' },
-  BUG: { nome: 'Bug', Icone: Bug, detalhe: 'Passos para reprodução' },
-  MELHORIA: { nome: 'Melhoria', Icone: Lightbulb, detalhe: 'Justificativa' },
-}
-
 const PRIORIDADES = { ALTA: 'Alta', MEDIA: 'Média', BAIXA: 'Baixa' }
 
-export default function Cartao({ cartao, onMover, onRemover, onAdicionarExtra }) {
+const ELEMENTOS_INTERATIVOS = 'button, a, input, textarea, select, form, [role="menu"]'
+
+function CorpoCartao({ cartao, onAbrir, children }) {
+  const { nome, Icone, detalhe } = TIPOS[cartao.tipo]
+  const prioridade = cartao.extras?.prioridade
+  return (
+    <>
+      <div className="pilulas">
+        <span className={`pilula pilula-tipo tipo-${cartao.tipo.toLowerCase()}`}>
+          <Icone size={12} /> {nome}
+        </span>
+        {prioridade && (
+          <span className={`pilula prioridade-${prioridade.toLowerCase()}`}>
+            <Flag size={11} /> {PRIORIDADES[prioridade]}
+          </span>
+        )}
+      </div>
+
+      <h3>
+        {onAbrir ? (
+          <button type="button" className="cartao-titulo" onClick={() => onAbrir(cartao.id)}>
+            {cartao.titulo}
+          </button>
+        ) : (
+          cartao.titulo
+        )}
+      </h3>
+      {cartao.descricao && <p className="cartao-descricao">{cartao.descricao}</p>}
+      {cartao.detalhe && (
+        <p className="cartao-detalhe">
+          <strong>{detalhe}</strong>
+          {cartao.detalhe}
+        </p>
+      )}
+
+      {children}
+
+      <ExtrasCartao id={cartao.id} extras={cartao.extras} coluna={cartao.coluna} />
+    </>
+  )
+}
+
+export function CartaoFlutuante({ cartao }) {
+  return (
+    <article className="cartao cartao-flutuante">
+      <CorpoCartao cartao={cartao} />
+      <span className="botao-menu" aria-hidden="true"><Ellipsis size={16} /></span>
+    </article>
+  )
+}
+
+export default function Cartao({ cartao, onAbrir, onMover, onRemover, onAdicionarExtra }) {
   const [menuAberto, setMenuAberto] = useState(false)
   const [editandoExtra, setEditandoExtra] = useState(false)
   const caixa = useRef(null)
-  const { nome, Icone, detalhe } = TIPOS[cartao.tipo]
-  const prioridade = cartao.extras?.prioridade
+  const { setNodeRef, listeners, isDragging } = useDraggable({
+    id: cartao.id,
+    disabled: menuAberto || editandoExtra,
+  })
 
   useEffect(() => {
     if (!menuAberto) return
@@ -40,36 +89,27 @@ export default function Cartao({ cartao, onMover, onRemover, onAdicionarExtra })
     fn()
   }
 
+  const classes = ['cartao', 'cartao-arrastavel']
+  if (menuAberto) classes.push('cartao-em-foco')
+  if (isDragging) classes.push('cartao-origem')
+
   return (
-    <article className={`cartao${menuAberto ? ' cartao-em-foco' : ''}`}>
-      <div className="pilulas">
-        <span className={`pilula pilula-tipo tipo-${cartao.tipo.toLowerCase()}`}>
-          <Icone size={12} /> {nome}
-        </span>
-        {prioridade && (
-          <span className={`pilula prioridade-${prioridade.toLowerCase()}`}>
-            <Flag size={11} /> {PRIORIDADES[prioridade]}
-          </span>
+    <article
+      ref={setNodeRef}
+      className={classes.join(' ')}
+      {...listeners}
+      onClick={(e) => {
+        if (!e.target.closest(ELEMENTOS_INTERATIVOS)) onAbrir(cartao.id)
+      }}
+    >
+      <CorpoCartao cartao={cartao} onAbrir={onAbrir}>
+        {editandoExtra && (
+          <NovoExtra
+            onAdicionar={(tipo, valor) => onAdicionarExtra(cartao.id, tipo, valor)}
+            onFechar={() => setEditandoExtra(false)}
+          />
         )}
-      </div>
-
-      <h3>{cartao.titulo}</h3>
-      {cartao.descricao && <p className="cartao-descricao">{cartao.descricao}</p>}
-      {cartao.detalhe && (
-        <p className="cartao-detalhe">
-          <strong>{detalhe}</strong>
-          {cartao.detalhe}
-        </p>
-      )}
-
-      {editandoExtra && (
-        <NovoExtra
-          onAdicionar={(tipo, valor) => onAdicionarExtra(cartao.id, tipo, valor)}
-          onFechar={() => setEditandoExtra(false)}
-        />
-      )}
-
-      <ExtrasCartao id={cartao.id} extras={cartao.extras} coluna={cartao.coluna} />
+      </CorpoCartao>
 
       <div ref={caixa}>
         <button
@@ -84,6 +124,10 @@ export default function Cartao({ cartao, onMover, onRemover, onAdicionarExtra })
         </button>
         {menuAberto && (
           <div role="menu" className="menu">
+            <button type="button" role="menuitem" onClick={() => escolher(() => onAbrir(cartao.id))}>
+              <PanelRightOpen size={14} /> Ver e editar
+            </button>
+            <hr />
             <p className="menu-titulo">Mover para</p>
             {COLUNAS.filter((col) => col.id !== cartao.coluna).map((col) => (
               <button
