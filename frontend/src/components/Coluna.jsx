@@ -1,7 +1,30 @@
 import { useDroppable } from '@dnd-kit/core'
 import { Plus } from 'lucide-react'
 
-export default function Coluna({ coluna, quantidade, arrastado, criando, onAlternarCriacao, formulario, children }) {
+const CORES_FAISCAS = ['#3b5bdb', '#7cc4f0', '#3fa87a', '#f2a33a', '#8ba5ff']
+const QUANTIDADE_FAISCAS = 14
+
+function Faiscas() {
+  return (
+    <span className="faiscas" aria-hidden="true">
+      {Array.from({ length: QUANTIDADE_FAISCAS }, (_, i) => {
+        const angulo = (i / QUANTIDADE_FAISCAS) * Math.PI * 2
+        return (
+          <span
+            key={i}
+            style={{
+              '--x': `${Math.round(Math.cos(angulo) * 100)}px`,
+              '--y': `${Math.round(Math.sin(angulo) * 55 + 24)}px`,
+              '--cor': CORES_FAISCAS[i % CORES_FAISCAS.length],
+            }}
+          />
+        )
+      })}
+    </span>
+  )
+}
+
+export default function Coluna({ coluna, quantidade, arrastado, criando, onAlternarCriacao, formulario, festa = 0, children }) {
   const { setNodeRef, isOver } = useDroppable({ id: coluna.id })
   const vemDeOutraColuna = arrastado && arrastado.coluna !== coluna.id
   const alvo = isOver && vemDeOutraColuna
@@ -30,6 +53,8 @@ export default function Coluna({ coluna, quantidade, arrastado, criando, onAlter
           </button>
         )}
       </header>
+
+      {festa > 0 && <Faiscas key={festa} />}
 
       <div className="coluna-lista">
         {formulario}
