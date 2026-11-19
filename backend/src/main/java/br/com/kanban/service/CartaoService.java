@@ -1,8 +1,11 @@
 package br.com.kanban.service;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.slf4j.Logger;
@@ -33,11 +36,15 @@ public class CartaoService {
 
     private static final Logger log = LoggerFactory.getLogger(CartaoService.class);
 
+    /** Situação de uma coluna; limite é null quando a coluna não tem limite. */
+    public record ResumoColuna(Coluna coluna, long quantidade, Integer limite) {}
+
     private final CartaoRepository repositorio;
     private final CartaoFactory tarefaFactory = new TarefaFactory();
     private final CartaoFactory bugFactory = new BugFactory();
     private final CartaoFactory melhoriaFactory = new MelhoriaFactory();
     private final List<ObservadorCartao> observadores = new CopyOnWriteArrayList<>();
+    private final Map<Coluna, Integer> limites = new ConcurrentHashMap<>();
 
     public CartaoService(CartaoRepository repositorio) {
         this.repositorio = repositorio;
@@ -70,6 +77,22 @@ public class CartaoService {
         return decorar(cartao);
     }
 
+    // Limite de cartões por coluna: limite <= 0 tira o limite
+    public void definirLimite(Coluna coluna, int limite) {
+        if (limite > 0) {
+            limites.put(coluna, limite);
+        } else {
+            limites.remove(coluna);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public List<ResumoColuna> colunas() {
+        return Arrays.stream(Coluna.values())
+                .map(c -> new ResumoColuna(c, repositorio.countByColuna(c), limites.get(c)))
+                .toList();
+    }
+
     // Observer: o serviço só conhece a interface, não os observadores concretos
     public void adicionarObservador(ObservadorCartao observador) {
         observadores.add(observador);
@@ -82,6 +105,9 @@ public class CartaoService {
     public Cartao mover(long id, Coluna destino) {
         Cartao cartao = buscar(id);
         Coluna origem = cartao.getColuna();
+        if (origem != destino) {
+            verificarLimite(destino);
+        }
         cartao.setColuna(destino);
         Cartao salvo = repositorio.save(cartao);
         if (origem != destino) {
@@ -92,6 +118,13 @@ public class CartaoService {
 
     public void remover(long id) {
         repositorio.delete(buscar(id));
+    }
+
+    private void verificarLimite(Coluna destino) {
+        Integer limite = limites.get(destino);
+        if (limite != null && repositorio.countByColuna(destino) >= limite) {
+            throw new ColunaCheiaException(destino, limite);
+        }
     }
 
     // Só avisa os observadores se a transação for confirmada; um rollback não gera evento
