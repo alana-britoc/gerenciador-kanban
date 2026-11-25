@@ -1,9 +1,13 @@
-import { useEffect, useState } from 'react'
-import { CalendarDays, CircleAlert, Columns3, SquareKanban, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Bell, CalendarDays, CircleAlert, Columns3, SquareKanban, X } from 'lucide-react'
+import * as atividade from './api/atividade'
 import * as api from './api/cartoes'
+import { escutarQuadro } from './api/tempoReal'
+import Avisos from './components/Avisos'
 import Calendario from './components/Calendario'
 import DetalhesCartao from './components/DetalhesCartao'
 import Filtros from './components/Filtros'
+import PainelAtividade from './components/PainelAtividade'
 import Quadro from './components/Quadro'
 import { FILTROS_VAZIOS, aplicarFiltros, temFiltro } from './filtros'
 import './App.css'
@@ -15,6 +19,9 @@ const VISOES = [
 
 const CHAVE_VISAO = 'kanban.visao'
 
+const TELA_LARGA = '(min-width: 1100px)'
+const DURACAO_AVISO_MS = 6000
+
 function visaoSalva() {
   try {
     const salva = localStorage.getItem(CHAVE_VISAO)
@@ -24,16 +31,72 @@ function visaoSalva() {
   }
 }
 
+function telaLarga() {
+  return window.matchMedia?.(TELA_LARGA).matches ?? true
+}
+
 export default function App() {
   const [cartoes, setCartoes] = useState([])
   const [erro, setErro] = useState(null)
   const [visao, setVisao] = useState(visaoSalva)
   const [abertoId, setAbertoId] = useState(null)
+  const [historico, setHistorico] = useState([])
+  const [notificacoes, setNotificacoes] = useState([])
+  const [painelAberto, setPainelAberto] = useState(telaLarga)
+  const [lidas, setLidas] = useState(0)
+  const [avisos, setAvisos] = useState([])
+  const [festa, setFesta] = useState(0)
   const [filtros, setFiltros] = useState(FILTROS_VAZIOS)
+  const notificacoesConhecidas = useRef(null)
+  const painelAbertoAgora = useRef(painelAberto)
+  const proximoAviso = useRef(1)
   const visaoAtual = VISOES.find((v) => v.id === visao)
   const cartaoAberto = cartoes.find((c) => c.id === abertoId)
   const visiveis = aplicarFiltros(cartoes, filtros)
   const filtrando = temFiltro(filtros)
+  const naoLidas = painelAberto ? 0 : Math.max(0, notificacoes.length - lidas)
+
+  useEffect(() => {
+    painelAbertoAgora.current = painelAberto
+  }, [painelAberto])
+
+  useEffect(() => {
+    if (!painelAberto) return
+    const apertouEsc = (e) => {
+      if (e.key === 'Escape' && !telaLarga() && !document.querySelector('dialog[open]')) setPainelAberto(false)
+    }
+    window.addEventListener('keydown', apertouEsc)
+    return () => window.removeEventListener('keydown', apertouEsc)
+  }, [painelAberto])
+
+  function alternarPainel() {
+    if (!painelAberto) setLidas(notificacoes.length)
+    setPainelAberto(!painelAberto)
+  }
+
+  function fecharAviso(id) {
+    setAvisos((atuais) => atuais.filter((a) => a.id !== id))
+  }
+
+  function mostrarAviso(texto) {
+    const id = proximoAviso.current++
+    setAvisos((atuais) => [...atuais, { id, texto }])
+    setTimeout(() => fecharAviso(id), DURACAO_AVISO_MS)
+  }
+
+  function registrarNotificacoes(lista) {
+    const anteriores = notificacoesConhecidas.current
+    notificacoesConhecidas.current = lista.length
+    if (anteriores === null || lista.length < anteriores) {
+      setLidas(lista.length)
+      return
+    }
+    if (painelAbertoAgora.current) setLidas(lista.length)
+    const novas = lista.slice(anteriores)
+    if (novas.length === 0) return
+    setFesta((f) => f + 1)
+    novas.forEach((n) => mostrarAviso(n.mensagem))
+  }
 
   function trocarVisao(id) {
     setVisao(id)
@@ -43,9 +106,20 @@ export default function App() {
   }
 
   const carregar = () =>
-    api.listar().then(setCartoes).then(() => setErro(null)).catch(() => setErro('Back fora do ar?'))
+    Promise.all([api.listar(), atividade.listarHistorico(), atividade.listarNotificacoes()])
+      .then(([lista, movimentos, concluidos]) => {
+        setCartoes(lista)
+        setHistorico(movimentos)
+        setNotificacoes(concluidos)
+        registrarNotificacoes(concluidos)
+        setErro(null)
+      })
+      .catch(() => setErro('Back fora do ar?'))
 
   useEffect(() => { carregar() }, [])
+
+  // quando um cartão muda de coluna em outra aba, recarrega o quadro
+  useEffect(() => escutarQuadro(() => carregar()), [])
 
   const acao = (fn) => (...args) =>
     fn(...args)
@@ -80,9 +154,22 @@ export default function App() {
               <small>Padrões de Projeto</small>
             </div>
           </div>
-          <span className="topo-resumo">
-            {cartoes.length} {cartoes.length === 1 ? 'cartão' : 'cartões'}
-          </span>
+          <div className="topo-acoes">
+            <span className="topo-resumo">
+              {cartoes.length} {cartoes.length === 1 ? 'cartão' : 'cartões'}
+            </span>
+            <button
+              type="button"
+              className="botao-sino"
+              aria-label={naoLidas > 0 ? `Atividade, ${naoLidas} novas` : 'Atividade'}
+              aria-expanded={painelAberto}
+              aria-controls="painel-atividade"
+              onClick={alternarPainel}
+            >
+              <Bell size={19} strokeWidth={1.8} />
+              {naoLidas > 0 && <span className="sino-contador">{naoLidas}</span>}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -117,21 +204,39 @@ export default function App() {
           </div>
         )}
 
-        <Filtros cartoes={cartoes} filtros={filtros} onMudar={setFiltros} visiveis={visiveis.length} />
+        <div className={`area${painelAberto ? ' com-painel' : ''}`}>
+          <div className="area-conteudo">
+            <Filtros cartoes={cartoes} filtros={filtros} onMudar={setFiltros} visiveis={visiveis.length} />
 
-        {visao === 'calendario' ? (
-          <Calendario cartoes={visiveis} onAbrir={setAbertoId} />
-        ) : (
-          <Quadro
-            cartoes={visiveis}
-            filtrando={filtrando}
-            onAbrir={setAbertoId}
-            onCriar={acao(api.criar)}
-            onMover={mover}
-            onRemover={acao(api.remover)}
-            onAdicionarExtra={acao(api.adicionarExtra)}
-          />
-        )}
+            {visao === 'calendario' ? (
+              <Calendario cartoes={visiveis} onAbrir={setAbertoId} />
+            ) : (
+              <Quadro
+                cartoes={visiveis}
+                festa={festa}
+                filtrando={filtrando}
+                onAbrir={setAbertoId}
+                onCriar={acao(api.criar)}
+                onMover={mover}
+                onRemover={acao(api.remover)}
+                onAdicionarExtra={acao(api.adicionarExtra)}
+              />
+            )}
+          </div>
+
+          {painelAberto && (
+            <>
+              <div className="painel-fundo" aria-hidden="true" onClick={() => setPainelAberto(false)} />
+              <PainelAtividade
+                historico={historico}
+                notificacoes={notificacoes}
+                existe={(id) => cartoes.some((c) => c.id === id)}
+                onAbrir={setAbertoId}
+                onFechar={() => setPainelAberto(false)}
+              />
+            </>
+          )}
+        </div>
 
         {cartaoAberto && (
           <DetalhesCartao
@@ -146,6 +251,8 @@ export default function App() {
           />
         )}
       </main>
+
+      <Avisos avisos={avisos} onFechar={fecharAviso} />
     </>
   )
 }
