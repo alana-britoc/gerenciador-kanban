@@ -3,14 +3,16 @@ package br.com.kanban.patterns.comportamental;
 import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import br.com.kanban.domain.Coluna;
 import br.com.kanban.websocket.QuadroWebSocketHandler;
 import tools.jackson.databind.json.JsonMapper;
 
-/** Publica cada movimento no WebSocket, para todo quadro aberto se atualizar na hora. */
+/**
+ * Publica cada movimento no WebSocket, para todo quadro aberto se atualizar na hora.
+ * O CartaoService só avisa os observadores depois do commit, então quem recarregar
+ * o quadro já vê a coluna nova, e um movimento desfeito não chega a ninguém.
+ */
 @Component
 public class QuadroTempoRealObserver implements ObservadorCartao {
 
@@ -29,23 +31,7 @@ public class QuadroTempoRealObserver implements ObservadorCartao {
 
     @Override
     public void aoMoverCartao(MovimentoCartaoEvento evento) {
-        String texto = json.writeValueAsString(new Mensagem(CARTAO_MOVIDO, evento.cartao().getId(),
-                evento.colunaOrigem(), evento.colunaDestino(), evento.horario()));
-        depoisDoCommit(() -> websocket.enviarATodos(texto));
-    }
-
-    // O aviso só sai depois que o movimento foi gravado: se a transação for
-    // desfeita ninguém é avisado, e quem recarregar o quadro já vê a coluna nova.
-    private static void depoisDoCommit(Runnable acao) {
-        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            acao.run();
-            return;
-        }
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                acao.run();
-            }
-        });
+        websocket.enviarATodos(json.writeValueAsString(new Mensagem(CARTAO_MOVIDO, evento.cartao().getId(),
+                evento.colunaOrigem(), evento.colunaDestino(), evento.horario())));
     }
 }
