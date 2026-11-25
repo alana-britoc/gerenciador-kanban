@@ -6,8 +6,10 @@ import { escutarQuadro } from './api/tempoReal'
 import Avisos from './components/Avisos'
 import Calendario from './components/Calendario'
 import DetalhesCartao from './components/DetalhesCartao'
+import Filtros from './components/Filtros'
 import PainelAtividade from './components/PainelAtividade'
 import Quadro from './components/Quadro'
+import { FILTROS_VAZIOS, aplicarFiltros, temFiltro } from './filtros'
 import './App.css'
 
 const VISOES = [
@@ -44,11 +46,14 @@ export default function App() {
   const [lidas, setLidas] = useState(0)
   const [avisos, setAvisos] = useState([])
   const [festa, setFesta] = useState(0)
+  const [filtros, setFiltros] = useState(FILTROS_VAZIOS)
   const notificacoesConhecidas = useRef(null)
   const painelAbertoAgora = useRef(painelAberto)
   const proximoAviso = useRef(1)
   const visaoAtual = VISOES.find((v) => v.id === visao)
   const cartaoAberto = cartoes.find((c) => c.id === abertoId)
+  const visiveis = aplicarFiltros(cartoes, filtros)
+  const filtrando = temFiltro(filtros)
   const naoLidas = painelAberto ? 0 : Math.max(0, notificacoes.length - lidas)
 
   useEffect(() => {
@@ -201,12 +206,15 @@ export default function App() {
 
         <div className={`area${painelAberto ? ' com-painel' : ''}`}>
           <div className="area-conteudo">
+            <Filtros cartoes={cartoes} filtros={filtros} onMudar={setFiltros} visiveis={visiveis.length} />
+
             {visao === 'calendario' ? (
-              <Calendario cartoes={cartoes} onAbrir={setAbertoId} />
+              <Calendario cartoes={visiveis} onAbrir={setAbertoId} />
             ) : (
               <Quadro
-                cartoes={cartoes}
+                cartoes={visiveis}
                 festa={festa}
+                filtrando={filtrando}
                 onAbrir={setAbertoId}
                 onCriar={acao(api.criar)}
                 onMover={mover}

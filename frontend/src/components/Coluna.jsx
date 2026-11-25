@@ -24,7 +24,7 @@ function Faiscas() {
   )
 }
 
-export default function Coluna({ coluna, quantidade, arrastado, criando, onAlternarCriacao, formulario, festa = 0, children }) {
+export default function Coluna({ coluna, quantidade, arrastado, criando, filtrando, onAlternarCriacao, formulario, festa = 0, children }) {
   const { setNodeRef, isOver } = useDroppable({ id: coluna.id })
   const vemDeOutraColuna = arrastado && arrastado.coluna !== coluna.id
   const alvo = isOver && vemDeOutraColuna
@@ -64,7 +64,9 @@ export default function Coluna({ coluna, quantidade, arrastado, criando, onAlter
           <p className="coluna-vazia">
             {vemDeOutraColuna
               ? 'Solte um cartão aqui'
-              : podeCriar
+              : filtrando
+                ? 'Nenhum cartão com esses filtros'
+                : podeCriar
                 ? 'Nenhum cartão. Use o + para criar.'
                 : 'Nenhum cartão aqui'}
           </p>
