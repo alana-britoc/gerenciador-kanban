@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Bell, CalendarDays, CircleAlert, Columns3, SquareKanban, X } from 'lucide-react'
 import * as atividade from './api/atividade'
 import * as api from './api/cartoes'
+import { escutarQuadro } from './api/tempoReal'
 import Avisos from './components/Avisos'
 import Calendario from './components/Calendario'
 import DetalhesCartao from './components/DetalhesCartao'
@@ -111,6 +112,9 @@ export default function App() {
       .catch(() => setErro('Back fora do ar?'))
 
   useEffect(() => { carregar() }, [])
+
+  // quando um cartão muda de coluna em outra aba, recarrega o quadro
+  useEffect(() => escutarQuadro(() => carregar()), [])
 
   const acao = (fn) => (...args) =>
     fn(...args)
